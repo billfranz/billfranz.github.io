@@ -101,15 +101,52 @@ body { font-family: 'Lora', Georgia, serif; background: var(--bg); color: var(--
 .page { max-width: 1280px; margin: 0 auto; padding: 28px 24px 72px; }
 
 /* ── SCORE STRIP ─────────────────────────────────────────────────────────── */
-.score-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 22px; }
-@media (max-width: 540px) { .score-grid { grid-template-columns: repeat(2,1fr); } }
-.score-cell { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; text-align: center; }
-.score-num { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; line-height: 1; margin-bottom: 3px; }
-.score-num.c { color: var(--correct); }
-.score-num.i { color: var(--incorrect); }
-.score-num.n { color: var(--text); }
-.score-num.d { color: var(--text2); }
-.score-lbl { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .07em; }
+/* score pill — lives in header, no page space used */
+.score-pill {
+  position: relative;
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 100px; padding: 5px 14px;
+  font-size: 13px; font-family: 'Lora', serif;
+  cursor: pointer; user-select: none;
+  white-space: nowrap;
+  transition: border-color .15s;
+}
+.score-pill:hover { border-color: var(--border2); }
+.score-pill .sp-correct   { color: var(--correct); font-weight: 600; }
+.score-pill .sp-incorrect { color: var(--incorrect); font-weight: 600; }
+.score-pill .sp-pct       { color: var(--text2); font-size: 12px; }
+.score-pill .sp-dot       { color: var(--border2); }
+
+/* expandable detail panel */
+.score-panel {
+  position: absolute; top: calc(100% + 8px); right: 0;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow-lg);
+  padding: 16px 20px; min-width: 200px; z-index: 200;
+  display: none;
+  font-family: 'Lora', serif;
+}
+.score-panel.open { display: block; }
+.score-panel-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: 24px; padding: 4px 0;
+  font-size: 13px; color: var(--text2);
+  border-bottom: 1px solid var(--border);
+}
+.score-panel-row:last-child { border-bottom: none; }
+.score-panel-row .sp-val {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px; font-weight: 700;
+}
+.sp-val.c { color: var(--correct); }
+.sp-val.i { color: var(--incorrect); }
+.sp-val.n { color: var(--text); }
+.sp-val.d { color: var(--text2); }
+@media (hover: hover) {
+  /* desktop: show on hover */
+  .score-pill:hover .score-panel { display: block; }
+}
 
 /* ── CONTROLS ────────────────────────────────────────────────────────────── */
 .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 18px; }
@@ -240,20 +277,39 @@ select:hover, button:hover { border-color: var(--text2); }
   <div class="header-inner">
     <span class="logo">Deutsche Quiz</span>
     <select class="header-deck-sel" id="deck-select" aria-label="Select deck"></select>
+    <!-- Score pill — hover/tap for breakdown -->
+    <div class="score-pill" id="score-pill" role="button" aria-label="Score summary" tabindex="0">
+      <span>✓ <span class="sp-correct" id="s-correct">0</span></span>
+      <span class="sp-dot">·</span>
+      <span>✗ <span class="sp-incorrect" id="s-incorrect">0</span></span>
+      <span class="sp-dot">·</span>
+      <span class="sp-pct" id="s-pct">—</span>
+      <!-- Detail panel -->
+      <div class="score-panel" id="score-panel">
+        <div class="score-panel-row">
+          <span>Correct</span>
+          <span class="sp-val c" id="sp-correct">0</span>
+        </div>
+        <div class="score-panel-row">
+          <span>Incorrect</span>
+          <span class="sp-val i" id="sp-incorrect">0</span>
+        </div>
+        <div class="score-panel-row">
+          <span>Accuracy</span>
+          <span class="sp-val n" id="sp-pct2">—</span>
+        </div>
+        <div class="score-panel-row">
+          <span>Total seen</span>
+          <span class="sp-val d" id="s-seen">0</span>
+        </div>
+      </div>
+    </div>
     <span class="header-meta" id="header-meta">Loading…</span>
   </div>
 </header>
 
 <!-- ── MAIN ────────────────────────────────────────────────────────────── -->
 <main class="page">
-
-  <!-- Score -->
-  <div class="score-grid">
-    <div class="score-cell"><div class="score-num c" id="s-correct">0</div><div class="score-lbl">Correct</div></div>
-    <div class="score-cell"><div class="score-num i" id="s-incorrect">0</div><div class="score-lbl">Incorrect</div></div>
-    <div class="score-cell"><div class="score-num n" id="s-pct">—</div><div class="score-lbl">Accuracy</div></div>
-    <div class="score-cell"><div class="score-num d" id="s-seen">0</div><div class="score-lbl">Total seen</div></div>
-  </div>
 
   <!-- Controls -->
   <div class="controls">
@@ -624,9 +680,15 @@ function updateProgress() {
 
 function updateScores() {
   const tot = scores.correct + scores.incorrect;
+  const pct = tot ? Math.round(scores.correct / tot * 100) + '%' : '—';
+  // Pill (compact, always visible)
   document.getElementById('s-correct').textContent   = scores.correct;
   document.getElementById('s-incorrect').textContent = scores.incorrect;
-  document.getElementById('s-pct').textContent       = tot ? Math.round(scores.correct/tot*100)+'%' : '—';
+  document.getElementById('s-pct').textContent       = pct;
+  // Panel detail
+  document.getElementById('sp-correct').textContent  = scores.correct;
+  document.getElementById('sp-incorrect').textContent= scores.incorrect;
+  document.getElementById('sp-pct2').textContent     = pct;
   document.getElementById('s-seen').textContent      = scores.seen.size;
 }
 
@@ -844,6 +906,27 @@ function init() {
   document.getElementById('btn-reset').addEventListener('click',  resetAll);
   document.getElementById('filter-cat').addEventListener('change', () => startSession());
   document.getElementById('sort-mode').addEventListener('change',  () => startSession());
+
+  // Score pill: mobile tap toggles panel; desktop uses CSS hover
+  const pill  = document.getElementById('score-pill');
+  const panel = document.getElementById('score-panel');
+  pill.addEventListener('click', (e) => {
+    // Only toggle on touch/non-hover devices
+    if (window.matchMedia('(hover: none)').matches) {
+      panel.classList.toggle('open');
+      e.stopPropagation();
+    }
+  });
+  pill.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      panel.classList.toggle('open');
+      e.preventDefault();
+    }
+  });
+  // Close panel when tapping elsewhere on mobile
+  document.addEventListener('click', (e) => {
+    if (!pill.contains(e.target)) panel.classList.remove('open');
+  });
 
   // Load first deck
   loadDeck(DECKS[0]);
