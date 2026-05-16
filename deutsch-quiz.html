@@ -351,7 +351,7 @@ function tabURL(tab) {
   return SHEET_BASE + '&sheet=' + encodeURIComponent(tab);
 }
 
-async function fetchCSV(tab) {
+async function fetchCSV(tab, expectedHeader) {
   const raw = tabURL(tab);
   const attempts = [
     raw,
@@ -362,11 +362,23 @@ async function fetchCSV(tab) {
     try {
       const r = await fetch(url, { cache: 'no-store' });
       if (!r.ok) continue;
-      const txt = await r.text();
-      if (txt.trim().length > 0) return txt;
+      const txt = await r.text().then(t => t.trim());
+      if (!txt) continue;
+      // Validate: first line must match the expected header for this tab.
+      // Proxies sometimes return the first sheet tab regardless of &sheet= param.
+      if (expectedHeader) {
+        const firstLine = txt.split('\n')[0].toLowerCase().replace(/\s/g,'');
+        const expected  = expectedHeader.toLowerCase().replace(/\s/g,'');
+        if (!firstLine.includes(expected)) {
+          console.warn(`[fetchCSV] Got wrong tab from ${url} — header was: ${txt.split('\n')[0]}`);
+          continue;
+        }
+      }
+      console.log(`[fetchCSV] Live data loaded for "${tab}" from ${url}`);
+      return txt;
     } catch(_) {}
   }
-  // All live fetches failed — fall back to embedded data
+  console.log(`[fetchCSV] Falling back to embedded data for "${tab}"`);
   return null;
 }
 
@@ -776,7 +788,12 @@ async function loadDeck(deck) {
   updateScores();
 
   try {
-    let csv = await fetchCSV(deck.sheetTab);
+    // Pass a distinctive header token so fetchCSV can reject wrong-tab responses
+    const headerTokens = {
+      'Der Die Das':     'article',
+      'Deutsche Verben': 'mnemonic',
+    };
+    let csv = await fetchCSV(deck.sheetTab, headerTokens[deck.sheetTab]);
     if (!csv) {
       // Live fetch failed — use embedded data
       csv = getEmbeddedCSV(deck.sheetTab);
