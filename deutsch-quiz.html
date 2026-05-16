@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deutsch Lernen — Flashcard Quiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+/* ── TOKENS ─────────────────────────────────────────────────────────────── */
+:root {
+  --bg:         #f7f5f0;
+  --surface:    #ffffff;
+  --surface2:   #f0ede6;
+  --border:     #e2ddd6;
+  --border2:    #cdc8be;
+  --text:       #1a1814;
+  --text2:      #6b6459;
+  --text3:      #9c9488;
+  --radius:     12px;
+  --radius-sm:  6px;
+  --shadow:     0 2px 8px rgba(0,0,0,0.05);
+  --shadow-lg:  0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
+  /* Article colors */
+  --der:        #1a4d8a;  --der-bg:  #e8f0fa;  --der-bd:  #b8cef0;
+  --die:        #8a1a1a;  --die-bg:  #faeaea;  --die-bd:  #f0b8b8;
+  --das:        #1a6640;  --das-bg:  #e6f5ec;  --das-bd:  #b0e0c0;
+  /* Verb colors */
+  --v1:         #5a3a8a;  --v1-bg:   #f0eafa;  --v1-bd:   #d4b8f0;
+  --v2:         #1a5a6b;  --v2-bg:   #e6f5fa;  --v2-bd:   #b0d8e8;
+  --v3:         #6b3a00;  --v3-bg:   #fdf3e6;  --v3-bd:   #f0d09a;
+  --v4:         #3a5a1a;  --v4-bg:   #eef5e6;  --v4-bd:   #c0d8a0;
+  --v5:         #8a3a5a;  --v5-bg:   #faeaf0;  --v5-bd:   #f0b8d4;
+  --v6:         #1a3a6b;  --v6-bg:   #e6ecfa;  --v6-bd:   #b0c4f0;
+  --v7:         #5a5a1a;  --v7-bg:   #f5f5e6;  --v7-bd:   #d8d8a0;
+  --v8:         #6b1a1a;  --v8-bg:   #faf0e6;  --v8-bd:   #f0c8a0;
+  /* Feedback */
+  --correct:    #1a6640;  --correct-bg: #e6f5ec;  --correct-bd: #b0e0c0;
+  --incorrect:  #8a1a1a;  --incorrect-bg: #faeaea; --incorrect-bd: #f0b8b8;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:      #111009;  --surface:  #1c1a16;  --surface2: #242118;
+    --border:  #2e2b25;  --border2:  #3d3930;
+    --text:    #f0ede6;  --text2:    #a09880;   --text3:    #6b6450;
+    --der:     #7aaae0;  --der-bg:   #0e1e35;  --der-bd:   #1e3a5f;
+    --die:     #e07a7a;  --die-bg:   #350e0e;  --die-bd:   #5f1e1e;
+    --das:     #6ad4a0;  --das-bg:   #0e3520;  --das-bd:   #1e5f38;
+    --v1:      #b87ae0;  --v1-bg:    #1e0835;  --v1-bd:    #3f1a5f;
+    --v2:      #70c8e0;  --v2-bg:    #0e2835;  --v2-bd:    #1a4a5f;
+    --v3:      #e0a870;  --v3-bg:    #351e00;  --v3-bd:    #5f3a10;
+    --v4:      #a8c870;  --v4-bg:    #1a2008;  --v4-bd:    #384010;
+    --v5:      #e070b8;  --v5-bg:    #350820;  --v5-bd:    #5f1840;
+    --v6:      #70a0e0;  --v6-bg:    #081a35;  --v6-bd:    #183060;
+    --v7:      #d8d870;  --v7-bg:    #202008;  --v7-bd:    #404010;
+    --v8:      #e0a870;  --v8-bg:    #351808;  --v8-bd:    #5f3010;
+    --correct:    #6ad4a0;  --correct-bg:   #0e3520;  --correct-bd:   #1e5f38;
+    --incorrect:  #e07a7a;  --incorrect-bg: #350e0e;  --incorrect-bd: #5f1e1e;
+    --shadow:    0 2px 8px rgba(0,0,0,0.3);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.4);
+  }
+}
+
+/* ── RESET ───────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; scroll-behavior: smooth; }
+body { font-family: 'Lora', Georgia, serif; background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.6; }
+
+/* ── HEADER ──────────────────────────────────────────────────────────────── */
+.site-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  position: sticky; top: 0; z-index: 100;
+}
+.header-inner {
+  max-width: 1280px; margin: 0 auto;
+  display: flex; align-items: center; gap: 20px; height: 62px;
+}
+.logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px; font-weight: 700;
+  white-space: nowrap; text-decoration: none; color: var(--text);
+}
+.logo .der { color: var(--der); }
+.logo .die { color: var(--die); }
+.logo .das { color: var(--das); }
+.header-deck-sel {
+  flex: 1; max-width: 320px;
+  font-family: 'Lora', serif; font-size: 14px; font-weight: 500;
+  padding: 8px 32px 8px 14px;
+  border-radius: var(--radius-sm); border: 1px solid var(--border2);
+  background: var(--surface2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center;
+  color: var(--text); cursor: pointer; appearance: none; -webkit-appearance: none;
+}
+.header-deck-sel:focus { outline: 2px solid var(--der); outline-offset: 2px; }
+.header-meta { font-size: 12px; color: var(--text3); margin-left: auto; white-space: nowrap; }
+
+/* ── PAGE ────────────────────────────────────────────────────────────────── */
+.page { max-width: 1280px; margin: 0 auto; padding: 28px 24px 72px; }
+
+/* ── SCORE STRIP ─────────────────────────────────────────────────────────── */
+.score-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 22px; }
+@media (max-width: 540px) { .score-grid { grid-template-columns: repeat(2,1fr); } }
+.score-cell { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; text-align: center; }
+.score-num { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; line-height: 1; margin-bottom: 3px; }
+.score-num.c { color: var(--correct); }
+.score-num.i { color: var(--incorrect); }
+.score-num.n { color: var(--text); }
+.score-num.d { color: var(--text2); }
+.score-lbl { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .07em; }
+
+/* ── CONTROLS ────────────────────────────────────────────────────────────── */
+.controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 18px; }
+select, button {
+  font-family: 'Lora', serif; font-size: 13px; padding: 8px 14px;
+  border-radius: var(--radius-sm); border: 1px solid var(--border2);
+  background: var(--surface); color: var(--text); cursor: pointer;
+  transition: border-color .15s, background .15s;
+  appearance: none; -webkit-appearance: none;
+}
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px;
+}
+select:hover, button:hover { border-color: var(--text2); }
+.btn-primary { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 500; }
+.btn-primary:hover { opacity: .85; }
+.btn-ghost { background: transparent; border-color: transparent; color: var(--text3); }
+.btn-ghost:hover { background: var(--surface2); border-color: var(--border); color: var(--text2); }
+.ml-auto { margin-left: auto; }
+
+/* ── PROGRESS ────────────────────────────────────────────────────────────── */
+.progress-wrap { margin-bottom: 24px; }
+.progress-track { height: 3px; background: var(--border); border-radius: 2px; }
+.progress-fill { height: 100%; border-radius: 2px; background: var(--der); transition: width .4s ease; }
+.progress-lbl { font-size: 12px; color: var(--text3); margin-top: 5px; text-align: right; }
+
+/* ── CARD STAGE ──────────────────────────────────────────────────────────── */
+.card-stage { display: flex; justify-content: center; margin-bottom: 10px; }
+.card-wrap { width: 100%; max-width: 500px; perspective: 1400px; }
+.card {
+  width: 100%; min-height: 320px; position: relative;
+  transform-style: preserve-3d;
+  transition: transform .52s cubic-bezier(.4,0,.2,1);
+  cursor: pointer;
+}
+.card.flipped { transform: rotateY(180deg); cursor: default; }
+.card-face {
+  position: absolute; inset: 0; min-height: 320px;
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  border-radius: var(--radius); border: 1px solid var(--border);
+  background: var(--surface); box-shadow: var(--shadow-lg);
+  display: flex; flex-direction: column; padding: 28px 32px;
+}
+.card-back { transform: rotateY(180deg); }
+
+/* FRONT */
+.front-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.front-eyebrow { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 18px; }
+.front-word { font-family: 'Playfair Display', serif; font-size: 50px; font-weight: 700; line-height: 1.05; color: var(--text); margin-bottom: 10px; }
+.front-sub { font-size: 14px; color: var(--text2); font-style: italic; margin-bottom: 24px; }
+.tap-hint { font-size: 12px; color: var(--text3); display: flex; align-items: center; gap: 6px; }
+
+/* BACK — shared */
+.back-answer { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+.back-main { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 700; line-height: 1; }
+.back-word { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 500; color: var(--text); }
+.back-sub { font-size: 13px; color: var(--text2); font-style: italic; margin-bottom: 14px; }
+.back-pill { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 12px; border-radius: 100px; margin-bottom: 8px; border: 1px solid; letter-spacing: .03em; }
+.back-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--text3); margin-bottom: 4px; margin-top: 10px; }
+.back-text { font-size: 13px; color: var(--text2); line-height: 1.65; flex: 1; }
+.back-mnemonic { font-size: 13px; color: var(--text2); line-height: 1.65; font-style: italic; border-left: 2px solid var(--border2); padding-left: 12px; margin-top: 8px; flex: 1; }
+
+/* VOTE ROW */
+.vote-row { display: flex; gap: 10px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
+.vote-btn { flex: 1; padding: 10px 14px; font-size: 14px; font-family: 'Lora', serif; font-weight: 500; border-radius: var(--radius-sm); border: 1px solid; cursor: pointer; transition: opacity .15s, transform .1s; }
+.vote-btn:active { transform: scale(.97); }
+.vote-correct   { background: var(--correct-bg);   color: var(--correct);   border-color: var(--correct-bd); }
+.vote-incorrect { background: var(--incorrect-bg); color: var(--incorrect); border-color: var(--incorrect-bd); }
+
+/* SKIP */
+.skip-row { display: flex; justify-content: center; margin-bottom: 22px; }
+.skip-btn { font-size: 12px; color: var(--text3); background: none; border: none; cursor: pointer; padding: 4px 8px; border-radius: 4px; font-family: 'Lora', serif; }
+.skip-btn:hover { color: var(--text2); background: var(--surface2); }
+
+/* ── STATE CARDS ─────────────────────────────────────────────────────────── */
+.state-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 40px 32px; text-align: center;
+  max-width: 500px; margin: 0 auto;
+}
+.state-card h2 { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+.state-card p { font-size: 14px; color: var(--text2); line-height: 1.7; }
+.state-card code { font-size: 12px; background: var(--surface2); padding: 2px 6px; border-radius: 4px; font-family: monospace; word-break: break-all; }
+.spinner { width: 30px; height: 30px; border: 3px solid var(--border); border-top-color: var(--der); border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto 16px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+.fade-up { animation: fadeUp .35s ease both; }
+
+/* ── DONE CARD ───────────────────────────────────────────────────────────── */
+.done-wrap { display: flex; justify-content: center; }
+.done-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow-lg);
+  padding: 40px 32px; text-align: center; max-width: 500px; width: 100%;
+}
+.done-emoji { font-size: 48px; margin-bottom: 12px; }
+.done-title { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+.done-sub { font-size: 14px; color: var(--text2); margin-bottom: 24px; }
+.done-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+/* ── LEGEND ──────────────────────────────────────────────────────────────── */
+.legend { margin-top: 40px; padding-top: 28px; border-top: 1px solid var(--border); }
+.legend-title { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 14px; }
+.legend-pills { display: flex; flex-wrap: wrap; gap: 7px; }
+.legend-pill { font-size: 11px; padding: 4px 13px; border-radius: 100px; border: 1px solid; cursor: default; }
+
+/* ── RESPONSIVE ──────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .page { padding: 18px 14px 56px; }
+  .header-inner { height: 54px; }
+  .logo { font-size: 17px; }
+  .front-word { font-size: 38px; }
+  .card-face { padding: 20px 18px; min-height: 290px; }
+  .back-main { font-size: 26px; }
+  .back-word { font-size: 18px; }
+}
+@media (max-width: 400px) {
+  .controls { gap: 6px; }
+  select, button { font-size: 12px; padding: 7px 10px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ──────────────────────────────────────────────────────────── -->
+<header class="site-header">
+  <div class="header-inner">
+    <span class="logo">
+      <span class="der">der</span> · <span class="die">die</span> · <span class="das">das</span>
+    </span>
+    <select class="header-deck-sel" id="deck-select" aria-label="Select deck"></select>
+    <span class="header-meta" id="header-meta">Loading…</span>
+  </div>
+</header>
+
+<!-- ── MAIN ────────────────────────────────────────────────────────────── -->
+<main class="page">
+
+  <!-- Score -->
+  <div class="score-grid">
+    <div class="score-cell"><div class="score-num c" id="s-correct">0</div><div class="score-lbl">Correct</div></div>
+    <div class="score-cell"><div class="score-num i" id="s-incorrect">0</div><div class="score-lbl">Incorrect</div></div>
+    <div class="score-cell"><div class="score-num n" id="s-pct">—</div><div class="score-lbl">Accuracy</div></div>
+    <div class="score-cell"><div class="score-num d" id="s-seen">0</div><div class="score-lbl">Total seen</div></div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <select id="filter-cat" aria-label="Filter by category"><option value="all">All categories</option></select>
+    <select id="sort-mode" aria-label="Sort order">
+      <option value="random">Randomized</option>
+      <option value="alpha">Alphabetical</option>
+      <option value="category">By category</option>
+    </select>
+    <button id="btn-new" class="btn-primary">New 50 cards</button>
+    <button id="btn-reset" class="btn-ghost ml-auto">↺ Reset all</button>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-wrap" id="progress-wrap" style="display:none">
+    <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    <div class="progress-lbl" id="progress-lbl">1 / 50</div>
+  </div>
+
+  <!-- Dynamic content area -->
+  <div id="main-area"></div>
+
+  <!-- Legend -->
+  <div class="legend" id="legend" style="display:none">
+    <div class="legend-title">Categories in this deck</div>
+    <div class="legend-pills" id="legend-pills"></div>
+  </div>
+
+</main>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════════════════════════
+const SHEET_BASE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSgTPml_HFjq4VcX_LJbP_6n-jTfh61Of6o07mQgpuP7-H-MFMXvjp8RHUC0jFpV4b_bbF-0fthEFMy/pub?output=csv';
+
+const BATCH = 50;
+
+// Deck definitions — add more objects here as you add sheet tabs
+const DECKS = [
+  {
+    id: 'ddd',
+    sheetTab: 'Der Die Das',      // exact tab name in Google Sheets
+    label: 'der · die · das',
+    type: 'ddd',                  // determines card format
+    // Column positions (0-indexed): English, German, Article, Category, Explanation
+    cols: { front: 1, frontSub: 0, answer: 2, pill: 3, detail: 4 },
+  },
+  {
+    id: 'verben',
+    sheetTab: 'Deutsche Verben',
+    label: 'Deutsche Verben',
+    type: 'verben',
+    // Column positions: English, German, Base Verb, Mnemonic
+    cols: { front: 0, answer: 1, pill: 2, detail: 3 },
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════════════════
+// COLOR PALETTE — categories auto-assigned in order of appearance
+// For DDD deck, article drives color; for Verben, category drives it.
+// ═══════════════════════════════════════════════════════════════════════════
+const DDD_COLORS = {
+  der: { fg:'var(--der)', bg:'var(--der-bg)', bd:'var(--der-bd)' },
+  die: { fg:'var(--die)', bg:'var(--die-bg)', bd:'var(--die-bd)' },
+  das: { fg:'var(--das)', bg:'var(--das-bg)', bd:'var(--das-bd)' },
+};
+const VERB_PALETTE = [
+  { fg:'var(--v1)', bg:'var(--v1-bg)', bd:'var(--v1-bd)' },
+  { fg:'var(--v2)', bg:'var(--v2-bg)', bd:'var(--v2-bd)' },
+  { fg:'var(--v3)', bg:'var(--v3-bg)', bd:'var(--v3-bd)' },
+  { fg:'var(--v4)', bg:'var(--v4-bg)', bd:'var(--v4-bd)' },
+  { fg:'var(--v5)', bg:'var(--v5-bg)', bd:'var(--v5-bd)' },
+  { fg:'var(--v6)', bg:'var(--v6-bg)', bd:'var(--v6-bd)' },
+  { fg:'var(--v7)', bg:'var(--v7-bg)', bd:'var(--v7-bd)' },
+  { fg:'var(--v8)', bg:'var(--v8-bg)', bd:'var(--v8-bd)' },
+];
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════════════
+let currentDeck = DECKS[0];
+let allCards    = [];
+let session     = [];
+let cardIndex   = 0;
+let flipped     = false;
+let sessionDone = false;
+let catColorMap = {};
+let scores = { correct:0, incorrect:0, seen: new Set() };
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CSV FETCH — tries direct, then two CORS proxies
+// ═══════════════════════════════════════════════════════════════════════════
+function tabURL(tab) {
+  return SHEET_BASE + '&sheet=' + encodeURIComponent(tab);
+}
+
+async function fetchCSV(tab) {
+  const raw = tabURL(tab);
+  const attempts = [
+    raw,
+    `https://corsproxy.io/?${encodeURIComponent(raw)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(raw)}`,
+  ];
+  for (const url of attempts) {
+    try {
+      const r = await fetch(url, { cache: 'no-store' });
+      if (!r.ok) continue;
+      const txt = await r.text();
+      if (txt.trim().length > 0) return txt;
+    } catch(_) {}
+  }
+  throw new Error('All fetch attempts failed. Make sure the sheet is published (File → Share → Publish to web → CSV) and you have an internet connection.');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CSV PARSE
+// ═══════════════════════════════════════════════════════════════════════════
+function parseCSV(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  // Skip header rows (any row where first two cells equal "English" and "German" etc.)
+  const dataLines = lines.filter((l, i) => {
+    if (i === 0) return false; // always skip row 0
+    const cells = splitLine(l);
+    // skip repeated header rows
+    if (cells[0] && cells[1] && cells[0].toLowerCase() === cells[1].toLowerCase()) return false;
+    return cells.some(c => c.trim().length > 0);
+  });
+  return dataLines.map(l => splitLine(l));
+}
+
+function splitLine(line) {
+  const result = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { if (inQ && line[i+1] === '"') { cur += '"'; i++; } else inQ = !inQ; }
+    else if (c === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
+    else cur += c;
+  }
+  result.push(cur.trim());
+  return result;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CARD BUILDING — converts raw CSV rows into card objects per deck type
+// ═══════════════════════════════════════════════════════════════════════════
+function buildCards(rows, deck) {
+  const { cols, type } = deck;
+  return rows
+    .filter(r => r[cols.front] && r[cols.front].length > 0)
+    .map(r => {
+      if (type === 'ddd') {
+        return {
+          front:   r[cols.front]   || '',   // German word
+          frontSub:r[cols.frontSub]|| '',   // English gloss
+          answer:  r[cols.answer]  || '',   // Article: der/die/das
+          pill:    r[cols.pill]    || '',   // Category
+          detail:  r[cols.detail]  || '',   // Explanation
+          _key:    r[cols.front],
+        };
+      } else {
+        // verben: front=English, back=German + Base Verb + Mnemonic
+        return {
+          front:   r[cols.front]   || '',   // English meaning
+          answer:  r[cols.answer]  || '',   // German verb phrase
+          pill:    r[cols.pill]    || '',   // Base verb
+          detail:  r[cols.detail]  || '',   // Mnemonic
+          _key:    r[cols.answer] || r[cols.front],
+        };
+      }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// COLOR MAP
+// ═══════════════════════════════════════════════════════════════════════════
+function buildColorMap(cards) {
+  catColorMap = {};
+  let idx = 0;
+  if (currentDeck.type === 'ddd') {
+    // color by article
+    cards.forEach(c => {
+      if (!(c.pill in catColorMap)) {
+        const art = c.answer.toLowerCase();
+        catColorMap[c.pill] = DDD_COLORS[art] || DDD_COLORS['das'];
+      }
+    });
+  } else {
+    cards.forEach(c => {
+      if (!(c.pill in catColorMap)) {
+        catColorMap[c.pill] = VERB_PALETTE[idx % VERB_PALETTE.length];
+        idx++;
+      }
+    });
+  }
+}
+
+function getColor(pillLabel) {
+  return catColorMap[pillLabel] || VERB_PALETTE[0];
+}
+
+function cv(varName) {
+  return getComputedStyle(document.documentElement).getPropertyValue(varName.replace('var(','').replace(')','').trim()).trim();
+}
+
+function applyColor(el, pillLabel, mode) {
+  const p = getColor(pillLabel);
+  if (mode === 'fg')   { el.style.color = p.fg; }
+  if (mode === 'pill') { el.style.color = p.fg; el.style.background = p.bg; el.style.borderColor = p.bd; }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SESSION MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════════════
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+
+function buildSession() {
+  const filter = document.getElementById('filter-cat').value;
+  const sort   = document.getElementById('sort-mode').value;
+  let pool = filter === 'all' ? allCards : allCards.filter(c => c.pill === filter);
+  if (sort === 'random')   pool = shuffle(pool);
+  else if (sort === 'alpha')    pool = [...pool].sort((a,b) => a.front.localeCompare(b.front));
+  else if (sort === 'category') pool = [...pool].sort((a,b) => a.pill.localeCompare(b.pill) || a.front.localeCompare(b.front));
+  return pool.slice(0, BATCH);
+}
+
+function startSession() {
+  session = buildSession();
+  cardIndex = 0; flipped = false; sessionDone = false;
+  document.getElementById('progress-wrap').style.display = '';
+  document.getElementById('legend').style.display = '';
+  if (session.length === 0) { showMsg('No cards match this filter.', ''); return; }
+  renderQuizArea();
+  renderCard();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CARD RENDERING
+// ═══════════════════════════════════════════════════════════════════════════
+function renderQuizArea() {
+  document.getElementById('main-area').innerHTML = `
+    <div class="card-stage">
+      <div class="card-wrap">
+        <div class="card" id="the-card" role="button" tabindex="0">
+          <div class="card-face" id="card-front"></div>
+          <div class="card-face card-back" id="card-back"></div>
+        </div>
+      </div>
+    </div>
+    <div class="skip-row">
+      <button class="skip-btn" id="btn-skip">Skip without scoring →</button>
+    </div>`;
+  bindCardEvents();
+}
+
+function renderCard() {
+  const c = session[cardIndex];
+  if (!c) return;
+
+  // ── FRONT ──
+  const front = document.getElementById('card-front');
+  if (currentDeck.type === 'ddd') {
+    front.innerHTML = `
+      <div class="front-body">
+        <div class="front-eyebrow">Was ist der Artikel?</div>
+        <div class="front-word">${esc(c.front)}</div>
+        ${c.frontSub ? `<div class="front-sub">"${esc(c.frontSub)}"</div>` : ''}
+        <div class="tap-hint">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12V5a2 2 0 1 1 4 0v7"/><path d="M13 12V9a2 2 0 1 1 4 0v3"/><path d="M17 13a2 2 0 1 1 4 0v3a6 6 0 0 1-6 6H9a6 6 0 0 1-6-6v-1a2 2 0 1 1 4 0"/></svg>
+          Tap to reveal
+        </div>
+      </div>`;
+  } else {
+    front.innerHTML = `
+      <div class="front-body">
+        <div class="front-eyebrow">What's the German?</div>
+        <div class="front-word" style="font-size:clamp(18px,3vw,28px);font-style:italic;font-weight:400;max-width:100%;text-align:center;line-height:1.4">${esc(c.front)}</div>
+        <div class="tap-hint" style="margin-top:28px">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12V5a2 2 0 1 1 4 0v7"/><path d="M13 12V9a2 2 0 1 1 4 0v3"/><path d="M17 13a2 2 0 1 1 4 0v3a6 6 0 0 1-6 6H9a6 6 0 0 1-6-6v-1a2 2 0 1 1 4 0"/></svg>
+          Tap to reveal
+        </div>
+      </div>`;
+  }
+
+  // ── BACK ──
+  const back = document.getElementById('card-back');
+  const col = getColor(c.pill);
+
+  if (currentDeck.type === 'ddd') {
+    const artColor = { der:'var(--der)', die:'var(--die)', das:'var(--das)' };
+    back.innerHTML = `
+      <div class="back-answer">
+        <span class="back-main" style="color:${artColor[c.answer.toLowerCase()]||'var(--text)'}">${esc(c.answer)}</span>
+        <span class="back-word">${esc(c.front)}</span>
+      </div>
+      <div class="back-sub">${c.frontSub ? `"${esc(c.frontSub)}"` : ''}</div>
+      <span class="back-pill" style="color:${col.fg};background:${col.bg};border-color:${col.bd}">${esc(c.pill)}</span>
+      <p class="back-text">${esc(c.detail)}</p>
+      <div class="vote-row">
+        <button class="vote-btn vote-incorrect" id="btn-incorrect">✗ Incorrect</button>
+        <button class="vote-btn vote-correct"   id="btn-correct">✓ Correct</button>
+      </div>`;
+  } else {
+    back.innerHTML = `
+      <div class="back-answer" style="margin-bottom:4px">
+        <span class="back-word" style="font-size:20px;font-style:italic">${esc(c.answer)}</span>
+      </div>
+      <div class="back-sub" style="margin-bottom:10px">"${esc(c.front)}"</div>
+      <div class="back-label">Base verb</div>
+      <span class="back-pill" style="color:${col.fg};background:${col.bg};border-color:${col.bd}">${esc(c.pill)}</span>
+      <div class="back-label" style="margin-top:14px">Mnemonic</div>
+      <p class="back-mnemonic">${esc(c.detail)}</p>
+      <div class="vote-row">
+        <button class="vote-btn vote-incorrect" id="btn-incorrect">✗ Incorrect</button>
+        <button class="vote-btn vote-correct"   id="btn-correct">✓ Correct</button>
+      </div>`;
+  }
+
+  // Reset flip state
+  flipped = false;
+  const cardEl = document.getElementById('the-card');
+  cardEl.classList.remove('flipped');
+  cardEl.setAttribute('aria-label', `Card: ${c.front} — tap to flip`);
+  updateProgress();
+}
+
+function esc(str) {
+  return String(str || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PROGRESS + SCORES
+// ═══════════════════════════════════════════════════════════════════════════
+function updateProgress() {
+  const pct = session.length ? (cardIndex / session.length) * 100 : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-lbl').textContent  = (cardIndex+1) + ' / ' + session.length;
+}
+
+function updateScores() {
+  const tot = scores.correct + scores.incorrect;
+  document.getElementById('s-correct').textContent   = scores.correct;
+  document.getElementById('s-incorrect').textContent = scores.incorrect;
+  document.getElementById('s-pct').textContent       = tot ? Math.round(scores.correct/tot*100)+'%' : '—';
+  document.getElementById('s-seen').textContent      = scores.seen.size;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// VOTING + NAVIGATION
+// ═══════════════════════════════════════════════════════════════════════════
+function vote(correct) {
+  const c = session[cardIndex];
+  if (correct) scores.correct++; else scores.incorrect++;
+  scores.seen.add(c._key);
+  updateScores();
+  advance();
+}
+
+function advance() {
+  if (cardIndex + 1 >= session.length) { endSession(); return; }
+  cardIndex++;
+  renderCard();
+}
+
+function endSession() {
+  sessionDone = true;
+  const tot = scores.correct + scores.incorrect;
+  const pct = tot ? Math.round(scores.correct/tot*100) : 0;
+  const emoji = pct >= 80 ? '🎉' : pct >= 50 ? '👍' : '📚';
+  document.getElementById('main-area').innerHTML = `
+    <div class="done-wrap">
+      <div class="done-card fade-up">
+        <div class="done-emoji">${emoji}</div>
+        <div class="done-title">Runde abgeschlossen!</div>
+        <div class="done-sub">${scores.correct} correct · ${scores.incorrect} incorrect · ${pct}% accuracy this session</div>
+        <div class="done-btns">
+          <button class="btn-primary" id="btn-new2">New ${BATCH} cards</button>
+          <button class="btn-ghost"   id="btn-reset2">Reset &amp; start over</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('progress-wrap').style.display = 'none';
+  document.getElementById('btn-new2').addEventListener('click',   () => startSession());
+  document.getElementById('btn-reset2').addEventListener('click', resetAll);
+}
+
+function resetAll() {
+  scores = { correct:0, incorrect:0, seen: new Set() };
+  updateScores();
+  startSession();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// EVENT BINDING (re-runs each time the card HTML is recreated)
+// ═══════════════════════════════════════════════════════════════════════════
+function bindCardEvents() {
+  const cardEl = document.getElementById('the-card');
+  cardEl.addEventListener('click', () => {
+    if (flipped) return;
+    flipped = true; cardEl.classList.add('flipped');
+  });
+  cardEl.addEventListener('keydown', e => {
+    if ((e.key==='Enter'||e.key===' ') && !flipped) { flipped=true; cardEl.classList.add('flipped'); e.preventDefault(); }
+  });
+  document.getElementById('btn-correct').addEventListener('click',   e => { e.stopPropagation(); vote(true); });
+  document.getElementById('btn-incorrect').addEventListener('click', e => { e.stopPropagation(); vote(false); });
+  document.getElementById('btn-skip').addEventListener('click', () => advance());
+}
+
+// Global keyboard
+document.addEventListener('keydown', e => {
+  if (sessionDone) return;
+  if (!flipped) return;
+  if (e.key==='ArrowRight'||e.key==='ArrowUp')   { e.preventDefault(); vote(true); }
+  if (e.key==='ArrowLeft' ||e.key==='ArrowDown') { e.preventDefault(); vote(false); }
+  if (e.key===' ') { e.preventDefault(); advance(); }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// LEGEND + FILTER
+// ═══════════════════════════════════════════════════════════════════════════
+function buildLegend() {
+  const pills = document.getElementById('legend-pills');
+  pills.innerHTML = '';
+  Object.entries(catColorMap).forEach(([cat, col]) => {
+    const p = document.createElement('span');
+    p.className = 'legend-pill';
+    p.textContent = cat;
+    p.style.color = col.fg; p.style.background = col.bg; p.style.borderColor = col.bd;
+    pills.appendChild(p);
+  });
+}
+
+function buildFilter() {
+  const sel = document.getElementById('filter-cat');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="all">All categories</option>';
+  Object.keys(catColorMap).forEach(cat => {
+    const o = document.createElement('option');
+    o.value = cat; o.textContent = cat;
+    if (cat === cur) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STATE CARDS
+// ═══════════════════════════════════════════════════════════════════════════
+function showLoading(msg) {
+  document.getElementById('main-area').innerHTML = `
+    <div class="card-stage"><div class="state-card fade-up">
+      <div class="spinner"></div>
+      <h2>${msg || 'Loading…'}</h2>
+      <p>Fetching from Google Sheets.</p>
+    </div></div>`;
+  document.getElementById('progress-wrap').style.display = 'none';
+  document.getElementById('legend').style.display = 'none';
+}
+
+function showMsg(title, body) {
+  document.getElementById('main-area').innerHTML = `
+    <div class="card-stage"><div class="state-card fade-up">
+      <h2>${title}</h2>${body ? `<p>${body}</p>` : ''}
+    </div></div>`;
+}
+
+function showError(err) {
+  document.getElementById('main-area').innerHTML = `
+    <div class="card-stage"><div class="state-card fade-up">
+      <h2>⚠️ Could not load deck</h2>
+      <p>${err}</p>
+      <p style="margin-top:12px;font-size:12px;color:var(--text3)">
+        Make sure your sheet is published:<br>
+        <strong>File → Share → Publish to web → CSV → Publish</strong>
+      </p>
+    </div></div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// LOAD DECK
+// ═══════════════════════════════════════════════════════════════════════════
+async function loadDeck(deck) {
+  currentDeck = deck;
+  showLoading(`Loading "${deck.label}"…`);
+  // Reset scores when switching decks
+  scores = { correct:0, incorrect:0, seen: new Set() };
+  updateScores();
+
+  try {
+    const csv  = await fetchCSV(deck.sheetTab);
+    const rows = parseCSV(csv);
+    allCards   = buildCards(rows, deck);
+
+    if (allCards.length === 0) {
+      showError(`No data rows found in tab "${deck.sheetTab}". Check your sheet has content below the header row.`);
+      return;
+    }
+
+    buildColorMap(allCards);
+    buildFilter();
+    buildLegend();
+
+    document.getElementById('header-meta').textContent =
+      allCards.length + ' words · ' + BATCH + ' per session';
+
+    startSession();
+  } catch (err) {
+    showError(err.message);
+    console.error(err);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════════════
+function init() {
+  // Populate deck selector in header
+  const sel = document.getElementById('deck-select');
+  DECKS.forEach((d, i) => {
+    const o = document.createElement('option');
+    o.value = i; o.textContent = d.label;
+    sel.appendChild(o);
+  });
+  sel.addEventListener('change', () => loadDeck(DECKS[parseInt(sel.value)]));
+
+  // Controls
+  document.getElementById('btn-new').addEventListener('click',    () => startSession());
+  document.getElementById('btn-reset').addEventListener('click',  resetAll);
+  document.getElementById('filter-cat').addEventListener('change', () => startSession());
+  document.getElementById('sort-mode').addEventListener('change',  () => startSession());
+
+  // Load first deck
+  loadDeck(DECKS[0]);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
