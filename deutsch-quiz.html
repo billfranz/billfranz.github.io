@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Deutsch Lernen — Flashcard Quiz</title>
+<title>Deutsche Quiz</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
@@ -238,9 +238,7 @@ select:hover, button:hover { border-color: var(--text2); }
 <!-- ── HEADER ──────────────────────────────────────────────────────────── -->
 <header class="site-header">
   <div class="header-inner">
-    <span class="logo">
-      <span class="der">der</span> · <span class="die">die</span> · <span class="das">das</span>
-    </span>
+    <span class="logo">Deutsche Quiz</span>
     <select class="header-deck-sel" id="deck-select" aria-label="Select deck"></select>
     <span class="header-meta" id="header-meta">Loading…</span>
   </div>
@@ -299,7 +297,7 @@ const DECKS = [
   {
     id: 'ddd',
     sheetTab: 'Der Die Das',      // exact tab name in Google Sheets
-    label: 'der · die · das',
+    label: 'Der, Die, Das',
     type: 'ddd',                  // determines card format
     // Column positions (0-indexed): English, German, Article, Category, Explanation
     cols: { front: 1, frontSub: 0, answer: 2, pill: 3, detail: 4 },
@@ -307,10 +305,10 @@ const DECKS = [
   {
     id: 'verben',
     sheetTab: 'Deutsche Verben',
-    label: 'Deutsche Verben',
+    label: 'Verben',
     type: 'verben',
     // Column positions: English, German, Base Verb, Mnemonic
-    cols: { front: 0, answer: 1, pill: 2, detail: 3 },
+    cols: { front: 1, english: 0, baseVerb: 2, mnemonic: 3 },
   },
 ];
 
@@ -368,7 +366,8 @@ async function fetchCSV(tab) {
       if (txt.trim().length > 0) return txt;
     } catch(_) {}
   }
-  throw new Error('All fetch attempts failed. Make sure the sheet is published (File → Share → Publish to web → CSV) and you have an internet connection.');
+  // All live fetches failed — fall back to embedded data
+  return null;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -376,12 +375,11 @@ async function fetchCSV(tab) {
 // ═══════════════════════════════════════════════════════════════════════════
 function parseCSV(text) {
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-  // Skip header rows (any row where first two cells equal "English" and "German" etc.)
   const dataLines = lines.filter((l, i) => {
-    if (i === 0) return false; // always skip row 0
+    if (i === 0) return false; // always skip header row
     const cells = splitLine(l);
-    // skip repeated header rows
-    if (cells[0] && cells[1] && cells[0].toLowerCase() === cells[1].toLowerCase()) return false;
+    // skip any row that is an exact repeat of the header (English, German, ...)
+    if (cells[0] && cells[0].toLowerCase() === 'english') return false;
     return cells.some(c => c.trim().length > 0);
   });
   return dataLines.map(l => splitLine(l));
@@ -418,13 +416,13 @@ function buildCards(rows, deck) {
           _key:    r[cols.front],
         };
       } else {
-        // verben: front=English, back=German + Base Verb + Mnemonic
+        // verben: front=German, back=English + Mnemonic, pill=Base Verb for filtering
         return {
-          front:   r[cols.front]   || '',   // English meaning
-          answer:  r[cols.answer]  || '',   // German verb phrase
-          pill:    r[cols.pill]    || '',   // Base verb
-          detail:  r[cols.detail]  || '',   // Mnemonic
-          _key:    r[cols.answer] || r[cols.front],
+          front:    r[cols.front]    || '',   // col 1: German verb phrase → front of card
+          english:  r[cols.english]  || '',   // col 0: English meaning → back of card
+          pill:     r[cols.baseVerb] || '',   // col 2: Base verb → category pill & filter
+          detail:   r[cols.mnemonic] || '',   // col 3: Mnemonic → back of card
+          _key:     r[cols.front]    || '',
         };
       }
     });
@@ -494,7 +492,7 @@ function startSession() {
   document.getElementById('legend').style.display = '';
   if (session.length === 0) { showMsg('No cards match this filter.', ''); return; }
   renderQuizArea();
-  renderCard();
+  renderCard();  // bindCardEvents is called inside renderCard after buttons exist
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -513,7 +511,6 @@ function renderQuizArea() {
     <div class="skip-row">
       <button class="skip-btn" id="btn-skip">Skip without scoring →</button>
     </div>`;
-  bindCardEvents();
 }
 
 function renderCard() {
@@ -536,9 +533,9 @@ function renderCard() {
   } else {
     front.innerHTML = `
       <div class="front-body">
-        <div class="front-eyebrow">What's the German?</div>
-        <div class="front-word" style="font-size:clamp(18px,3vw,28px);font-style:italic;font-weight:400;max-width:100%;text-align:center;line-height:1.4">${esc(c.front)}</div>
-        <div class="tap-hint" style="margin-top:28px">
+        <div class="front-eyebrow">Was bedeutet das?</div>
+        <div class="front-word" style="font-size:clamp(20px,3vw,38px);font-style:italic;font-weight:500;max-width:100%;text-align:center;line-height:1.4">${esc(c.front)}</div>
+        <div class="tap-hint" style="margin-top:32px">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12V5a2 2 0 1 1 4 0v7"/><path d="M13 12V9a2 2 0 1 1 4 0v3"/><path d="M17 13a2 2 0 1 1 4 0v3a6 6 0 0 1-6 6H9a6 6 0 0 1-6-6v-1a2 2 0 1 1 4 0"/></svg>
           Tap to reveal
         </div>
@@ -565,14 +562,22 @@ function renderCard() {
       </div>`;
   } else {
     back.innerHTML = `
-      <div class="back-answer" style="margin-bottom:4px">
-        <span class="back-word" style="font-size:20px;font-style:italic">${esc(c.answer)}</span>
+      <div style="margin-bottom:6px">
+        <span style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3)">German</span>
+        <div style="font-family:'Playfair Display',serif;font-size:22px;font-style:italic;font-weight:500;color:var(--text);margin-top:2px">${esc(c.front)}</div>
       </div>
-      <div class="back-sub" style="margin-bottom:10px">"${esc(c.front)}"</div>
-      <div class="back-label">Base verb</div>
-      <span class="back-pill" style="color:${col.fg};background:${col.bg};border-color:${col.bd}">${esc(c.pill)}</span>
-      <div class="back-label" style="margin-top:14px">Mnemonic</div>
-      <p class="back-mnemonic">${esc(c.detail)}</p>
+      <div style="margin-bottom:14px">
+        <span style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3)">English</span>
+        <div style="font-size:17px;font-weight:500;color:var(--text);margin-top:2px">${esc(c.english)}</div>
+      </div>
+      <div style="margin-bottom:6px">
+        <span style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3)">Base verb</span><br>
+        <span class="back-pill" style="color:${col.fg};background:${col.bg};border-color:${col.bd};margin-top:4px;display:inline-block">${esc(c.pill)}</span>
+      </div>
+      <div style="margin-bottom:4px">
+        <span style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3)">Mnemonic</span>
+      </div>
+      <p class="back-mnemonic" style="margin-top:2px">${esc(c.detail)}</p>
       <div class="vote-row">
         <button class="vote-btn vote-incorrect" id="btn-incorrect">✗ Incorrect</button>
         <button class="vote-btn vote-correct"   id="btn-correct">✓ Correct</button>
@@ -585,6 +590,9 @@ function renderCard() {
   cardEl.classList.remove('flipped');
   cardEl.setAttribute('aria-label', `Card: ${c.front} — tap to flip`);
   updateProgress();
+
+  // Bind all interactive events now that the full card DOM exists
+  bindCardEvents();
 }
 
 function esc(str) {
@@ -659,17 +667,33 @@ function resetAll() {
 // EVENT BINDING (re-runs each time the card HTML is recreated)
 // ═══════════════════════════════════════════════════════════════════════════
 function bindCardEvents() {
-  const cardEl = document.getElementById('the-card');
-  cardEl.addEventListener('click', () => {
+  const cardEl    = document.getElementById('the-card');
+  const btnOk     = document.getElementById('btn-correct');
+  const btnWrong  = document.getElementById('btn-incorrect');
+  const btnSkip   = document.getElementById('btn-skip');
+
+  if (!cardEl) return; // safety — DOM not ready yet
+
+  // Remove old listeners by cloning (avoids duplicate handlers on re-render)
+  const newCard = cardEl.cloneNode(true);
+  cardEl.parentNode.replaceChild(newCard, cardEl);
+
+  newCard.addEventListener('click', () => {
     if (flipped) return;
-    flipped = true; cardEl.classList.add('flipped');
+    flipped = true; newCard.classList.add('flipped');
   });
-  cardEl.addEventListener('keydown', e => {
-    if ((e.key==='Enter'||e.key===' ') && !flipped) { flipped=true; cardEl.classList.add('flipped'); e.preventDefault(); }
+  newCard.addEventListener('keydown', e => {
+    if ((e.key==='Enter'||e.key===' ') && !flipped) {
+      flipped = true; newCard.classList.add('flipped'); e.preventDefault();
+    }
   });
-  document.getElementById('btn-correct').addEventListener('click',   e => { e.stopPropagation(); vote(true); });
-  document.getElementById('btn-incorrect').addEventListener('click', e => { e.stopPropagation(); vote(false); });
-  document.getElementById('btn-skip').addEventListener('click', () => advance());
+
+  // Vote buttons live inside the back face — bind fresh each render
+  const bOk    = newCard.querySelector('#btn-correct');
+  const bWrong = newCard.querySelector('#btn-incorrect');
+  if (bOk)    bOk.addEventListener('click',    e => { e.stopPropagation(); vote(true); });
+  if (bWrong) bWrong.addEventListener('click', e => { e.stopPropagation(); vote(false); });
+  if (btnSkip) btnSkip.addEventListener('click', () => advance());
 }
 
 // Global keyboard
@@ -752,9 +776,19 @@ async function loadDeck(deck) {
   updateScores();
 
   try {
-    const csv  = await fetchCSV(deck.sheetTab);
+    let csv = await fetchCSV(deck.sheetTab);
+    if (!csv) {
+      // Live fetch failed — use embedded data
+      csv = getEmbeddedCSV(deck.sheetTab);
+    }
+    if (!csv) {
+      showError(`Could not load "${deck.sheetTab}" from Google Sheets, and no embedded data exists for this tab.<br><br>Host this file on a web server (GitHub Pages, Netlify) for live Google Sheets fetching.`);
+      return;
+    }
     const rows = parseCSV(csv);
+    console.log(`[${deck.label}] CSV rows parsed: ${rows.length}`);
     allCards   = buildCards(rows, deck);
+    console.log(`[${deck.label}] Cards built: ${allCards.length}`, allCards.slice(0,2));
 
     if (allCards.length === 0) {
       showError(`No data rows found in tab "${deck.sheetTab}". Check your sheet has content below the header row.`);
@@ -799,6 +833,482 @@ function init() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// EMBEDDED DATA — fallback when Google Sheets can't be fetched (local file).
+// To update: edit your Google Sheet, then paste fresh data here as CSV strings.
+// When hosted on a server, the live sheet is always used instead.
+// ═══════════════════════════════════════════════════════════════════════════
+function getEmbeddedCSV(tabName) {
+  const data = {};
+
+  data['Der Die Das'] = `English,German,Article,Category,Explanation
+man,Mann,der,Male persons & roles,Nouns referring to male people and male professional roles are der.
+father,Vater,der,Male persons & roles,Nouns referring to male people and male professional roles are der.
+brother,Bruder,der,Male persons & roles,Nouns referring to male people and male professional roles are der.
+son,Sohn,der,Male persons & roles,Nouns referring to male people and male professional roles are der.
+uncle,Onkel,der,Male persons & roles,Nouns referring to male people and male professional roles are der.
+king,König,der,Male persons & roles,Nouns referring to male people and male professional roles are der.
+doctor (m),Arzt,der,Male persons & roles,Nouns referring to male people and male professional roles are der.
+boss (m),Chef,der,Male persons & roles,Nouns referring to male people and male professional roles are der.
+friend / boyfriend,Freund,der,Male persons & roles,Nouns referring to male people and male professional roles are der.
+colleague (m),Kollege,der,Male persons & roles,Nouns referring to male people and male professional roles are der.
+teacher (m),Lehrer,der,-er agent suffix,"Nouns ending in -er that describe a person doing something are der: der Lehrer, der Fahrer."
+driver,Fahrer,der,-er agent suffix,"Nouns ending in -er that describe a person doing something are der: der Lehrer, der Fahrer."
+baker (m),Bäcker,der,-er agent suffix,"Nouns ending in -er that describe a person doing something are der: der Lehrer, der Fahrer."
+pupil (m),Schüler,der,-er agent suffix,"Nouns ending in -er that describe a person doing something are der: der Lehrer, der Fahrer."
+worker,Arbeiter,der,-er agent suffix,"Nouns ending in -er that describe a person doing something are der: der Lehrer, der Fahrer."
+speaker,Sprecher,der,-er agent suffix,"Nouns ending in -er that describe a person doing something are der: der Lehrer, der Fahrer."
+buyer,Käufer,der,-er agent suffix,"Nouns ending in -er that describe a person doing something are der: der Lehrer, der Fahrer."
+salesperson (m),Verkäufer,der,-er agent suffix,"Nouns ending in -er that describe a person doing something are der: der Lehrer, der Fahrer."
+researcher,Forscher,der,-er agent suffix,"Nouns ending in -er that describe a person doing something are der: der Lehrer, der Fahrer."
+body,Körper,der,-er agent suffix,"Nouns ending in -er that describe a person doing something are der: der Lehrer, der Fahrer."
+mistake,Fehler,der,-er agent suffix,"Nouns ending in -er that describe a person doing something are der: der Lehrer, der Fahrer."
+computer,Computer,der,-er agent suffix,"Nouns ending in -er that describe a person doing something are der: der Lehrer, der Fahrer."
+opponent,Gegner,der,-er agent suffix,"Nouns ending in -er that describe a person doing something are der: der Lehrer, der Fahrer."
+carrier / bearer,Träger,der,-er agent suffix,"Nouns ending in -er that describe a person doing something are der: der Lehrer, der Fahrer."
+Monday,Montag,der,Days of the week,All days of the week are der in German.
+Tuesday,Dienstag,der,Days of the week,All days of the week are der in German.
+Wednesday,Mittwoch,der,Days of the week,All days of the week are der in German.
+Thursday,Donnerstag,der,Days of the week,All days of the week are der in German.
+Friday,Freitag,der,Days of the week,All days of the week are der in German.
+Saturday,Samstag,der,Days of the week,All days of the week are der in German.
+Sunday,Sonntag,der,Days of the week,All days of the week are der in German.
+January,Januar,der,Months of the year,All months of the year are der in German.
+February,Februar,der,Months of the year,All months of the year are der in German.
+March,März,der,Months of the year,All months of the year are der in German.
+April,April,der,Months of the year,All months of the year are der in German.
+May,Mai,der,Months of the year,All months of the year are der in German.
+June,Juni,der,Months of the year,All months of the year are der in German.
+July,Juli,der,Months of the year,All months of the year are der in German.
+August,August,der,Months of the year,All months of the year are der in German.
+September,September,der,Months of the year,All months of the year are der in German.
+October,Oktober,der,Months of the year,All months of the year are der in German.
+November,November,der,Months of the year,All months of the year are der in German.
+December,Dezember,der,Months of the year,All months of the year are der in German.
+spring,Frühling,der,Seasons,All four seasons are der in German.
+summer,Sommer,der,Seasons,All four seasons are der in German.
+autumn,Herbst,der,Seasons,All four seasons are der in German.
+winter,Winter,der,Seasons,All four seasons are der in German.
+evening,Abend,der,Times of day,Most named times of day are der in German.
+morning,Morgen,der,Times of day,Most named times of day are der in German.
+noon,Mittag,der,Times of day,Most named times of day are der in German.
+afternoon,Nachmittag,der,Times of day,Most named times of day are der in German.
+rain,Regen,der,Weather & directions,Most weather phenomena and cardinal directions are der.
+snow,Schnee,der,Weather & directions,Most weather phenomena and cardinal directions are der.
+wind,Wind,der,Weather & directions,Most weather phenomena and cardinal directions are der.
+storm,Sturm,der,Weather & directions,Most weather phenomena and cardinal directions are der.
+fog,Nebel,der,Weather & directions,Most weather phenomena and cardinal directions are der.
+north,Norden,der,Weather & directions,Most weather phenomena and cardinal directions are der.
+south,Süden,der,Weather & directions,Most weather phenomena and cardinal directions are der.
+east,Osten,der,Weather & directions,Most weather phenomena and cardinal directions are der.
+west,Westen,der,Weather & directions,Most weather phenomena and cardinal directions are der.
+apprentice,Lehrling,der,-ling suffix,"Nouns ending in -ling are der: der Frühling, der Liebling, der Schmetterling."
+darling / favourite,Liebling,der,-ling suffix,"Nouns ending in -ling are der: der Frühling, der Liebling, der Schmetterling."
+butterfly,Schmetterling,der,-ling suffix,"Nouns ending in -ling are der: der Frühling, der Liebling, der Schmetterling."
+twin,Zwilling,der,-ling suffix,"Nouns ending in -ling are der: der Frühling, der Liebling, der Schmetterling."
+refugee,Flüchtling,der,-ling suffix,"Nouns ending in -ling are der: der Frühling, der Liebling, der Schmetterling."
+cage,Käfig,der,-ig / -ich suffix,"Nouns ending in -ig or -ich are typically der: der König, der Teppich."
+carpet,Teppich,der,-ig / -ich suffix,"Nouns ending in -ig or -ich are typically der: der König, der Teppich."
+stroke / line,Strich,der,-ig / -ich suffix,"Nouns ending in -ig or -ich are typically der: der König, der Teppich."
+area / domain,Bereich,der,-ig / -ich suffix,"Nouns ending in -ig or -ich are typically der: der König, der Teppich."
+comparison,Vergleich,der,-ig / -ich suffix,"Nouns ending in -ig or -ich are typically der: der König, der Teppich."
+capitalism,Kapitalismus,der,-ismus suffix,"Nouns ending in -ismus (ideologies, movements) are der."
+socialism,Sozialismus,der,-ismus suffix,"Nouns ending in -ismus (ideologies, movements) are der."
+tourism,Tourismus,der,-ismus suffix,"Nouns ending in -ismus (ideologies, movements) are der."
+optimism,Optimismus,der,-ismus suffix,"Nouns ending in -ismus (ideologies, movements) are der."
+realism,Realismus,der,-ismus suffix,"Nouns ending in -ismus (ideologies, movements) are der."
+doctor,Doktor,der,-or suffix,"Nouns ending in -or (Latin origin) are usually der: der Motor, der Faktor."
+motor / engine,Motor,der,-or suffix,"Nouns ending in -or (Latin origin) are usually der: der Motor, der Faktor."
+author (m),Autor,der,-or suffix,"Nouns ending in -or (Latin origin) are usually der: der Motor, der Faktor."
+factor,Faktor,der,-or suffix,"Nouns ending in -or (Latin origin) are usually der: der Motor, der Faktor."
+humor,Humor,der,-or suffix,"Nouns ending in -or (Latin origin) are usually der: der Motor, der Faktor."
+sector,Sektor,der,-or suffix,"Nouns ending in -or (Latin origin) are usually der: der Motor, der Faktor."
+wine,Wein,der,Alcoholic drinks,"Most alcoholic drinks are der: der Wein, der Whisky, der Sekt. (Exception: das Bier.)"
+whisky,Whisky,der,Alcoholic drinks,"Most alcoholic drinks are der: der Wein, der Whisky, der Sekt. (Exception: das Bier.)"
+sparkling wine,Sekt,der,Alcoholic drinks,"Most alcoholic drinks are der: der Wein, der Whisky, der Sekt. (Exception: das Bier.)"
+schnapps,Schnaps,der,Alcoholic drinks,"Most alcoholic drinks are der: der Wein, der Whisky, der Sekt. (Exception: das Bier.)"
+rum,Rum,der,Alcoholic drinks,"Most alcoholic drinks are der: der Wein, der Whisky, der Sekt. (Exception: das Bier.)"
+gin,Gin,der,Alcoholic drinks,"Most alcoholic drinks are der: der Wein, der Whisky, der Sekt. (Exception: das Bier.)"
+table,Tisch,der,Common der nouns,Frequently used masculine nouns to memorize.
+chair,Stuhl,der,Common der nouns,Frequently used masculine nouns to memorize.
+dog,Hund,der,Common der nouns,Frequently used masculine nouns to memorize.
+tree,Baum,der,Common der nouns,Frequently used masculine nouns to memorize.
+mountain,Berg,der,Common der nouns,Frequently used masculine nouns to memorize.
+letter,Brief,der,Common der nouns,Frequently used masculine nouns to memorize.
+bus,Bus,der,Common der nouns,Frequently used masculine nouns to memorize.
+film / movie,Film,der,Common der nouns,Frequently used masculine nouns to memorize.
+river,Fluss,der,Common der nouns,Frequently used masculine nouns to memorize.
+hunger,Hunger,der,Common der nouns,Frequently used masculine nouns to memorize.
+head,Kopf,der,Common der nouns,Frequently used masculine nouns to memorize.
+market,Markt,der,Common der nouns,Frequently used masculine nouns to memorize.
+park,Park,der,Common der nouns,Frequently used masculine nouns to memorize.
+plan,Plan,der,Common der nouns,Frequently used masculine nouns to memorize.
+place / square,Platz,der,Common der nouns,Frequently used masculine nouns to memorize.
+price / prize,Preis,der,Common der nouns,Frequently used masculine nouns to memorize.
+shoe,Schuh,der,Common der nouns,Frequently used masculine nouns to memorize.
+way / path,Weg,der,Common der nouns,Frequently used masculine nouns to memorize.
+train,Zug,der,Common der nouns,Frequently used massive nouns to memorize.
+profession,Beruf,der,Common der nouns,Frequently used masculine nouns to memorize.
+beginning,Anfang,der,Common der nouns,Frequently used masculine nouns to memorize.
+term / concept,Begriff,der,Common der nouns,Frequently used masculine nouns to memorize.
+operation / company,Betrieb,der,Common der nouns,Frequently used masculine nouns to memorize.
+glance / view,Blick,der,Common der nouns,Frequently used masculine nouns to memorize.
+influence,Einfluss,der,Common der nouns,Frequently used masculine nouns to memorize.
+success,Erfolg,der,Common der nouns,Frequently used masculine nouns to memorize.
+thought,Gedanke,der,Common der nouns,Frequently used masculine nouns to memorize.
+reason / ground,Grund,der,Common der nouns,Frequently used masculine nouns to memorize.
+content,Inhalt,der,Common der nouns,Frequently used masculine nouns to memorize.
+contact,Kontakt,der,Common der nouns,Frequently used masculine nouns to memorize.
+circle / district,Kreis,der,Common der nouns,Frequently used masculine nouns to memorize.
+benefit / use,Nutzen,der,Common der nouns,Frequently used masculine nouns to memorize.
+frame / framework,Rahmen,der,Common der nouns,Frequently used masculine nouns to memorize.
+step,Schritt,der,Common der nouns,Frequently used masculine nouns to memorize.
+protection,Schutz,der,Common der nouns,Frequently used masculine nouns to memorize.
+part,Teil,der,Common der nouns,Frequently used masculine nouns to memorize.
+overview,Überblick,der,Common der nouns,Frequently used masculine nouns to memorize.
+difference,Unterschied,der,Common der nouns,Frequently used masculine nouns to memorize.
+course / progression,Verlauf,der,Common der nouns,Frequently used masculine nouns to memorize.
+advantage,Vorteil,der,Common der nouns,Frequently used masculine nouns to memorize.
+value / worth,Wert,der,Common der nouns,Frequently used masculine nouns to memorize.
+purpose,Zweck,der,Common der nouns,Frequently used masculine nouns to memorize.
+woman / wife,Frau,die,Female persons & roles,Nouns referring to female people and female professional roles are die.
+mother,Mutter,die,Female persons & roles,Nouns referring to female people and female professional roles are die.
+sister,Schwester,die,Female persons & roles,Nouns referring to female people and female professional roles are die.
+daughter,Tochter,die,Female persons & roles,Nouns referring to female people and female professional roles are die.
+aunt,Tante,die,Female persons & roles,Nouns referring to female people and female professional roles are die.
+queen,Königin,die,Female persons & roles,Nouns referring to female people and female professional roles are die.
+teacher (f),Lehrerin,die,-in suffix (feminine),"Feminine agent nouns ending in -in are always die: die Lehrerin, die Ärztin."
+doctor (f),Ärztin,die,-in suffix (feminine),"Feminine agent nouns ending in -in are always die: die Lehrerin, die Ärztin."
+pupil (f),Schülerin,die,-in suffix (feminine),"Feminine agent nouns ending in -in are always die: die Lehrerin, die Ärztin."
+colleague (f),Kollegin,die,-in suffix (feminine),"Feminine agent nouns ending in -in are always die: die Lehrerin, die Ärztin."
+friend (f) / girlfriend,Freundin,die,-in suffix (feminine),"Feminine agent nouns ending in -in are always die: die Lehrerin, die Ärztin."
+baker (f),Bäckerin,die,-in suffix (feminine),"Feminine agent nouns ending in -in are always die: die Lehrerin, die Ärztin."
+author (f),Autorin,die,-in suffix (feminine),"Feminine agent nouns ending in -in are always die: die Lehrerin, die Ärztin."
+student (f),Studentin,die,-in suffix (feminine),"Feminine agent nouns ending in -in are always die: die Lehrerin, die Ärztin."
+newspaper,Zeitung,die,-ung suffix,"Nouns ending in -ung are almost always die: die Zeitung, die Hoffnung, die Wohnung."
+hope,Hoffnung,die,-ung suffix,"Nouns ending in -ung are almost always die: die Zeitung, die Hoffnung, die Wohnung."
+apartment,Wohnung,die,-ung suffix,"Nouns ending in -ung are almost always die: die Zeitung, die Hoffnung, die Wohnung."
+opinion,Meinung,die,-ung suffix,"Nouns ending in -ung are almost always die: die Zeitung, die Hoffnung, die Wohnung."
+management / pipe,Leitung,die,-ung suffix,"Nouns ending in -ung are almost always die: die Zeitung, die Hoffnung, die Wohnung."
+bill / invoice,Rechnung,die,-ung suffix,"Nouns ending in -ung are almost always die: die Zeitung, die Hoffnung, die Wohnung."
+solution,Lösung,die,-ung suffix,"Nouns ending in -ung are almost always die: die Zeitung, die Hoffnung, die Wohnung."
+exercise / practice,Übung,die,-ung suffix,"Nouns ending in -ung are almost always die: die Zeitung, die Hoffnung, die Wohnung."
+experience,Erfahrung,die,-ung suffix,"Nouns ending in -ung are almost always die: die Zeitung, die Hoffnung, die Wohnung."
+meaning / importance,Bedeutung,die,-ung suffix,"Nouns ending in -ung are almost always die: die Zeitung, die Hoffnung, die Wohnung."
+movement,Bewegung,die,-ung suffix,"Nouns ending in -ung are almost always die: die Zeitung, die Hoffnung, die Wohnung."
+decision,Entscheidung,die,-ung suffix,"Nouns ending in -ung are almost always die: die Zeitung, die Hoffnung, die Wohnung."
+explanation,Erklärung,die,-ung suffix,"Nouns ending in -ung are almost always die: die Zeitung, die Hoffnung, die Wohnung."
+connection,Verbindung,die,-ung suffix,"Nouns ending in -ung are almost always die: die Zeitung, die Hoffnung, die Wohnung."
+direction,Richtung,die,-ung suffix,"Nouns ending in -ung are almost always die: die Zeitung, die Hoffnung, die Wohnung."
+order / tidiness,Ordnung,die,-ung suffix,"Nouns ending in -ung are almost always die: die Zeitung, die Hoffnung, die Wohnung."
+attitude / setting,Einstellung,die,-ung suffix,"Nouns ending in -ung are almost always die: die Zeitung, die Hoffnung, die Wohnung."
+development,Entwicklung,die,-ung suffix,"Nouns ending in -ung are almost always die: die Zeitung, die Hoffnung, die Wohnung."
+challenge,Herausforderung,die,-ung suffix,"Nouns ending in -ung are almost always die: die Zeitung, die Hoffnung, die Wohnung."
+support,Unterstützung,die,-ung suffix,"Nouns ending in -ung are almost always die: die Zeitung, die Hoffnung, die Wohnung."
+change / alteration,Veränderung,die,-ung suffix,"Nouns ending in -ung are almost always die: die Zeitung, die Hoffnung, die Wohnung."
+responsibility,Verantwortung,die,-ung suffix,"Nouns ending in -ung are almost always die: die Zeitung, die Hoffnung, die Wohnung."
+effect,Wirkung,die,-ung suffix,"Nouns ending in -ung are almost always die: die Zeitung, die Hoffnung, die Wohnung."
+freedom,Freiheit,die,-heit / -keit suffix,"Nouns ending in -heit or -keit are always die: die Freiheit, die Möglichkeit."
+health,Gesundheit,die,-heit / -keit suffix,"Nouns ending in -heit or -keit are always die: die Freiheit, die Möglichkeit."
+possibility,Möglichkeit,die,-heit / -keit suffix,"Nouns ending in -heit or -keit are always die: die Freiheit, die Möglichkeit."
+reality,Wirklichkeit,die,-heit / -keit suffix,"Nouns ending in -heit or -keit are always die: die Freiheit, die Möglichkeit."
+safety / security,Sicherheit,die,-heit / -keit suffix,"Nouns ending in -heit or -keit are always die: die Freiheit, die Möglichkeit."
+truth,Wahrheit,die,-heit / -keit suffix,"Nouns ending in -heit or -keit are always die: die Freiheit, die Möglichkeit."
+beauty,Schönheit,die,-heit / -keit suffix,"Nouns ending in -heit or -keit are always die: die Freiheit, die Möglichkeit."
+unity / unit,Einheit,die,-heit / -keit suffix,"Nouns ending in -heit or -keit are always die: die Freiheit, die Möglichkeit."
+ability / skill,Fähigkeit,die,-heit / -keit suffix,"Nouns ending in -heit or -keit are always die: die Freiheit, die Möglichkeit."
+personality,Persönlichkeit,die,-heit / -keit suffix,"Nouns ending in -heit or -keit are always die: die Freiheit, die Möglichkeit."
+majority,Mehrheit,die,-heit / -keit suffix,"Nouns ending in -heit or -keit are always die: die Freiheit, die Möglichkeit."
+necessity,Notwendigkeit,die,-heit / -keit suffix,"Nouns ending in -heit or -keit are always die: die Freiheit, die Möglichkeit."
+public,Öffentlichkeit,die,-heit / -keit suffix,"Nouns ending in -heit or -keit are always die: die Freiheit, die Möglichkeit."
+the past,Vergangenheit,die,-heit / -keit suffix,"Nouns ending in -heit or -keit are always die: die Freiheit, die Möglichkeit."
+friendship,Freundschaft,die,-schaft suffix,"Nouns ending in -schaft are always die: die Freundschaft, die Gesellschaft."
+society / company,Gesellschaft,die,-schaft suffix,"Nouns ending in -schaft are always die: die Freundschaft, die Gesellschaft."
+team,Mannschaft,die,-schaft suffix,"Nouns ending in -schaft are always die: die Freundschaft, die Gesellschaft."
+economy,Wirtschaft,die,-schaft suffix,"Nouns ending in -schaft are always die: die Freundschaft, die Gesellschaft."
+science,Wissenschaft,die,-schaft suffix,"Nouns ending in -schaft are always die: die Freundschaft, die Gesellschaft."
+embassy / message,Botschaft,die,-schaft suffix,"Nouns ending in -schaft are always die: die Freundschaft, die Gesellschaft."
+characteristic,Eigenschaft,die,-schaft suffix,"Nouns ending in -schaft are always die: die Freundschaft, die Gesellschaft."
+nation,Nation,die,-ion / -tion suffix,"Nouns ending in -ion or -tion are always die: die Nation, die Situation, die Produktion."
+situation,Situation,die,-ion / -tion suffix,"Nouns ending in -ion or -tion are always die: die Nation, die Situation, die Produktion."
+production,Produktion,die,-ion / -tion suffix,"Nouns ending in -ion or -tion are always die: die Nation, die Situation, die Produktion."
+tradition,Tradition,die,-ion / -tion suffix,"Nouns ending in -ion or -tion are always die: die Nation, die Situation, die Produktion."
+function,Funktion,die,-ion / -tion suffix,"Nouns ending in -ion or -tion are always die: die Nation, die Situation, die Produktion."
+reaction,Reaktion,die,-ion / -tion suffix,"Nouns ending in -ion or -tion are always die: die Nation, die Situation, die Produktion."
+region,Region,die,-ion / -tion suffix,"Nouns ending in -ion or -tion are always die: die Nation, die Situation, die Produktion."
+religion,Religion,die,-ion / -tion suffix,"Nouns ending in -ion or -tion are always die: die Nation, die Situation, die Produktion."
+station,Station,die,-ion / -tion suffix,"Nouns ending in -ion or -tion are always die: die Nation, die Situation, die Produktion."
+emotion,Emotion,die,-ion / -tion suffix,"Nouns ending in -ion or -tion are always die: die Nation, die Situation, die Produktion."
+action,Aktion,die,-ion / -tion suffix,"Nouns ending in -ion or -tion are always die: die Nation, die Situation, die Produktion."
+quality,Qualität,die,-tät suffix,"Nouns ending in -tät (≈ English -ty) are always die: die Qualität, die Universität."
+university,Universität,die,-tät suffix,"Nouns ending in -tät (≈ English -ty) are always die: die Qualität, die Universität."
+reality,Realität,die,-tät suffix,"Nouns ending in -tät (≈ English -ty) are always die: die Qualität, die Universität."
+activity,Aktivität,die,-tät suffix,"Nouns ending in -tät (≈ English -ty) are always die: die Qualität, die Universität."
+capacity,Kapazität,die,-tät suffix,"Nouns ending in -tät (≈ English -ty) are always die: die Qualität, die Universität."
+creativity,Kreativität,die,-tät suffix,"Nouns ending in -tät (≈ English -ty) are always die: die Qualität, die Universität."
+identity,Identität,die,-tät suffix,"Nouns ending in -tät (≈ English -ty) are always die: die Qualität, die Universität."
+music,Musik,die,-ik suffix,"Nouns ending in -ik are usually die: die Musik, die Physik, die Technik."
+physics,Physik,die,-ik suffix,"Nouns ending in -ik are usually die: die Musik, die Physik, die Technik."
+clinic,Klinik,die,-ik suffix,"Nouns ending in -ik are usually die: die Musik, die Physik, die Technik."
+technology / technique,Technik,die,-ik suffix,"Nouns ending in -ik are usually die: die Musik, die Physik, die Technik."
+grammar,Grammatik,die,-ik suffix,"Nouns ending in -ik are usually die: die Musik, die Physik, die Technik."
+logic,Logik,die,-ik suffix,"Nouns ending in -ik are usually die: die Musik, die Physik, die Technik."
+mathematics,Mathematik,die,-ik suffix,"Nouns ending in -ik are usually die: die Musik, die Physik, die Technik."
+statistics,Statistik,die,-ik suffix,"Nouns ending in -ik are usually die: die Musik, die Physik, die Technik."
+criticism / critique,Kritik,die,-ik suffix,"Nouns ending in -ik are usually die: die Musik, die Physik, die Technik."
+politics / policy,Politik,die,-ik suffix,"Nouns ending in -ik are usually die: die Musik, die Physik, die Technik."
+family,Familie,die,-ie suffix,"Nouns ending in -ie are usually die: die Familie, die Energie, die Demokratie."
+democracy,Demokratie,die,-ie suffix,"Nouns ending in -ie are usually die: die Familie, die Energie, die Demokratie."
+energy,Energie,die,-ie suffix,"Nouns ending in -ie are usually die: die Familie, die Energie, die Demokratie."
+biology,Biologie,die,-ie suffix,"Nouns ending in -ie are usually die: die Familie, die Energie, die Demokratie."
+philosophy,Philosophie,die,-ie suffix,"Nouns ending in -ie are usually die: die Familie, die Energie, die Demokratie."
+therapy,Therapie,die,-ie suffix,"Nouns ending in -ie are usually die: die Familie, die Energie, die Demokratie."
+industry,Industrie,die,-ie suffix,"Nouns ending in -ie are usually die: die Familie, die Energie, die Demokratie."
+nature,Natur,die,-ur suffix,"Nouns ending in -ur are usually die: die Natur, die Kultur, die Struktur."
+culture,Kultur,die,-ur suffix,"Nouns ending in -ur are usually die: die Natur, die Kultur, die Struktur."
+hairstyle,Frisur,die,-ur suffix,"Nouns ending in -ur are usually die: die Natur, die Kultur, die Struktur."
+structure,Struktur,die,-ur suffix,"Nouns ending in -ur are usually die: die Natur, die Kultur, die Struktur."
+literature,Literatur,die,-ur suffix,"Nouns ending in -ur are usually die: die Natur, die Kultur, die Struktur."
+temperature,Temperatur,die,-ur suffix,"Nouns ending in -ur are usually die: die Natur, die Kultur, die Struktur."
+rose,Rose,die,Flowers & trees,"Most flowers and many trees are die: die Rose, die Tulpe, die Eiche."
+tulip,Tulpe,die,Flowers & trees,"Most flowers and many trees are die: die Rose, die Tulpe, die Eiche."
+oak tree,Eiche,die,Flowers & trees,"Most flowers and many trees are die: die Rose, die Tulpe, die Eiche."
+birch tree,Birke,die,Flowers & trees,"Most flowers and many trees are die: die Rose, die Tulpe, die Eiche."
+lily,Lilie,die,Flowers & trees,"Most flowers and many trees are die: die Rose, die Tulpe, die Eiche."
+time,Zeit,die,Common die nouns,Frequently used feminine nouns to memorize.
+hand,Hand,die,Common die nouns,Frequently used feminine nouns to memorize.
+city,Stadt,die,Common die nouns,Frequently used feminine nouns to memorize.
+street,Straße,die,Common die nouns,Frequently used feminine nouns to memorize.
+school,Schule,die,Common die nouns,Frequently used feminine nouns to memorize.
+language,Sprache,die,Common die nouns,Frequently used feminine nouns to memorize.
+world,Welt,die,Common die nouns,Frequently used feminine nouns to memorize.
+work,Arbeit,die,Common die nouns,Frequently used feminine nouns to memorize.
+question,Frage,die,Common die nouns,Frequently used feminine nouns to memorize.
+kitchen,Küche,die,Common die nouns,Frequently used feminine nouns to memorize.
+night,Nacht,die,Common die nouns,Frequently used feminine nouns to memorize.
+side / page,Seite,die,Common die nouns,Frequently used feminine nouns to memorize.
+hour,Stunde,die,Common die nouns,Frequently used feminine nouns to memorize.
+group,Gruppe,die,Common die nouns,Frequently used feminine nouns to memorize.
+border / limit,Grenze,die,Common die nouns,Frequently used feminine nouns to memorize.
+help,Hilfe,die,Common die nouns,Frequently used feminine nouns to memorize.
+church,Kirche,die,Common die nouns,Frequently used feminine nouns to memorize.
+air,Luft,die,Common die nouns,Frequently used feminine nouns to memorize.
+power,Macht,die,Common die nouns,Frequently used feminine nouns to memorize.
+duty / obligation,Pflicht,die,Common die nouns,Frequently used feminine nouns to memorize.
+calm / rest,Ruhe,die,Common die nouns,Frequently used feminine nouns to memorize.
+art,Kunst,die,Common die nouns,Frequently used feminine nouns to memorize.
+fear / anxiety,Angst,die,Common die nouns,Frequently used feminine nouns to memorize.
+answer,Antwort,die,Common die nouns,Frequently used feminine nouns to memorize.
+task / assignment,Aufgabe,die,Common die nouns,Frequently used feminine nouns to memorize.
+chance / opportunity,Chance,die,Common die nouns,Frequently used feminine nouns to memorize.
+level / plane,Ebene,die,Common die nouns,Frequently used feminine nouns to memorize.
+consequence / episode,Folge,die,Common die nouns,Frequently used feminine nouns to memorize.
+form / shape,Form,die,Common die nouns,Frequently used feminine nouns to memorize.
+history / story,Geschichte,die,Common die nouns,Frequently used feminine nouns to memorize.
+strength / force,Kraft,die,Common die nouns,Frequently used feminine nouns to memorize.
+situation / position,Lage,die,Common die nouns,Frequently used feminine nouns to memorize.
+method,Methode,die,Common die nouns,Frequently used feminine nouns to memorize.
+message / news,Nachricht,die,Common die nouns,Frequently used feminine nouns to memorize.
+party (political),Partei,die,Common die nouns,Frequently used feminine nouns to memorize.
+phase,Phase,die,Common die nouns,Frequently used feminine nouns to memorize.
+row / series,Reihe,die,Common die nouns,Frequently used feminine nouns to memorize.
+role,Rolle,die,Common die nouns,Frequently used feminine nouns to memorize.
+position / place,Stelle,die,Common die nouns,Frequently used feminine nouns to memorize.
+future,Zukunft,die,Common die nouns,Frequently used feminine nouns to memorize.
+girl,Mädchen,das,-chen / -lein diminutive,Diminutives ending in -chen or -lein are always das overriding any other rule.
+little house,Häuschen,das,-chen / -lein diminutive,Diminutives ending in -chen or -lein are always das overriding any other rule.
+rabbit,Kaninchen,das,-chen / -lein diminutive,Diminutives ending in -chen or -lein are always das overriding any other rule.
+bread roll,Brötchen,das,-chen / -lein diminutive,Diminutives ending in -chen or -lein are always das overriding any other rule.
+kitten,Kätzchen,das,-chen / -lein diminutive,Diminutives ending in -chen or -lein are always das overriding any other rule.
+young woman (dated),Fräulein,das,-chen / -lein diminutive,Diminutives ending in -chen or -lein are always das overriding any other rule.
+little book,Büchlein,das,-chen / -lein diminutive,Diminutives ending in -chen or -lein are always das overriding any other rule.
+instrument,Instrument,das,-ment suffix,Nouns ending in -ment (French/Latin origin) are das: das Instrument das Dokument.
+document,Dokument,das,-ment suffix,Nouns ending in -ment (French/Latin origin) are das: das Instrument das Dokument.
+experiment,Experiment,das,-ment suffix,Nouns ending in -ment (French/Latin origin) are das: das Instrument das Dokument.
+argument,Argument,das,-ment suffix,Nouns ending in -ment (French/Latin origin) are das: das Instrument das Dokument.
+element,Element,das,-ment suffix,Nouns ending in -ment (French/Latin origin) are das: das Instrument das Dokument.
+date,Datum,das,-um suffix (Latin),Nouns of Latin origin ending in -um are das: das Datum das Museum das Zentrum.
+museum,Museum,das,-um suffix (Latin),Nouns of Latin origin ending in -um are das: das Datum das Museum das Zentrum.
+center,Zentrum,das,-um suffix (Latin),Nouns of Latin origin ending in -um are das: das Datum das Museum das Zentrum.
+audience / public,Publikum,das,-um suffix (Latin),Nouns of Latin origin ending in -um are das: das Datum das Museum das Zentrum.
+forum,Forum,das,-um suffix (Latin),Nouns of Latin origin ending in -um are das: das Datum das Museum das Zentrum.
+stadium,Stadium,das,-um suffix (Latin),Nouns of Latin origin ending in -um are das: das Datum das Museum das Zentrum.
+aquarium,Aquarium,das,-um suffix (Latin),Nouns of Latin origin ending in -um are das: das Datum das Museum das Zentrum.
+grammar school,Gymnasium,das,-um suffix (Latin),Nouns of Latin origin ending in -um are das: das Datum das Museum das Zentrum.
+topic / theme,Thema,das,-um suffix (Latin),Nouns of Latin origin ending in -um are das: das Datum das Museum das Zentrum.
+system,System,das,-um suffix (Latin),Nouns of Latin origin ending in -um are das: das Datum das Museum das Zentrum.
+property / ownership,Eigentum,das,-tum suffix,Nouns ending in -tum are usually das: das Wachstum das Eigentum.
+growth,Wachstum,das,-tum suffix,Nouns ending in -tum are usually das: das Wachstum das Eigentum.
+Christianity,Christentum,das,-tum suffix,Nouns ending in -tum are usually das: das Wachstum das Eigentum.
+eating / food,Essen,das,Nominalized infinitive,When a verb infinitive is used as a noun it is always das: das Essen das Lernen das Schreiben.
+learning,Lernen,das,Nominalized infinitive,When a verb infinitive is used as a noun it is always das: das Essen das Lernen das Schreiben.
+sleeping,Schlafen,das,Nominalized infinitive,When a verb infinitive is used as a noun it is always das: das Essen das Lernen das Schreiben.
+running,Laufen,das,Nominalized infinitive,When a verb infinitive is used as a noun it is always das: das Essen das Lernen das Schreiben.
+writing,Schreiben,das,Nominalized infinitive,When a verb infinitive is used as a noun it is always das: das Essen das Lernen das Schreiben.
+reading,Lesen,das,Nominalized infinitive,When a verb infinitive is used as a noun it is always das: das Essen das Lernen das Schreiben.
+driving,Fahren,das,Nominalized infinitive,When a verb infinitive is used as a noun it is always das: das Essen das Lernen das Schreiben.
+playing,Spielen,das,Nominalized infinitive,When a verb infinitive is used as a noun it is always das: das Essen das Lernen das Schreiben.
+cooking,Kochen,das,Nominalized infinitive,When a verb infinitive is used as a noun it is always das: das Essen das Lernen das Schreiben.
+thinking,Denken,das,Nominalized infinitive,When a verb infinitive is used as a noun it is always das: das Essen das Lernen das Schreiben.
+acting / trading,Handeln,das,Nominalized infinitive,When a verb infinitive is used as a noun it is always das: das Essen das Lernen das Schreiben.
+knowledge,Wissen,das,Nominalized infinitive,When a verb infinitive is used as a noun it is always das: das Essen das Lernen das Schreiben.
+life / living,Leben,das,Nominalized infinitive,When a verb infinitive is used as a noun it is always das: das Essen das Lernen das Schreiben.
+behavior,Verhalten,das,Nominalized infinitive,When a verb infinitive is used as a noun it is always das: das Essen das Lernen das Schreiben.
+trust,Vertrauen,das,Nominalized infinitive,When a verb infinitive is used as a noun it is always das: das Essen das Lernen das Schreiben.
+plan / intention,Vorhaben,das,Nominalized infinitive,When a verb infinitive is used as a noun it is always das: das Essen das Lernen das Schreiben.
+being / essence,Wesen,das,Nominalized infinitive,When a verb infinitive is used as a noun it is always das: das Essen das Lernen das Schreiben.
+silence,Schweigen,das,Nominalized infinitive,When a verb infinitive is used as a noun it is always das: das Essen das Lernen das Schreiben.
+consciousness,Bewusstsein,das,Nominalized infinitive,When a verb infinitive is used as a noun it is always das: das Essen das Lernen das Schreiben.
+existence / presence,Dasein,das,Nominalized infinitive,When a verb infinitive is used as a noun it is always das: das Essen das Lernen das Schreiben.
+gold,Gold,das,Metals & elements,Most metals and chemical elements are das: das Gold das Silber das Eisen.
+silver,Silber,das,Metals & elements,Most metals and chemical elements are das: das Gold das Silber das Eisen.
+iron,Eisen,das,Metals & elements,Most metals and chemical elements are das: das Gold das Silber das Eisen.
+copper,Kupfer,das,Metals & elements,Most metals and chemical elements are das: das Gold das Silber das Eisen.
+aluminium,Aluminium,das,Metals & elements,Most metals and chemical elements are das: das Gold das Silber das Eisen.
+oil,Öl,das,Metals & elements,Most metals and chemical elements are das: das Gold das Silber das Eisen.
+salt,Salz,das,Metals & elements,Most metals and chemical elements are das: das Gold das Silber das Eisen.
+German (language),Deutsch,das,Languages as nouns,Languages used as nouns are das: das Deutsch das Englisch das Französisch.
+English (language),Englisch,das,Languages as nouns,Languages used as nouns are das: das Deutsch das Englisch das Französisch.
+French (language),Französisch,das,Languages as nouns,Languages used as nouns are das: das Deutsch das Englisch das Französisch.
+Spanish (language),Spanisch,das,Languages as nouns,Languages used as nouns are das: das Deutsch das Englisch das Französisch.
+result / outcome,Ergebnis,das,-nis suffix,Nouns ending in -nis are usually das: das Ergebnis das Geheimnis das Zeugnis.
+secret,Geheimnis,das,-nis suffix,Nouns ending in -nis are usually das: das Ergebnis das Geheimnis das Zeugnis.
+certificate / report,Zeugnis,das,-nis suffix,Nouns ending in -nis are usually das: das Ergebnis das Geheimnis das Zeugnis.
+ratio / relationship,Verhältnis,das,-nis suffix,Nouns ending in -nis are usually das: das Ergebnis das Geheimnis das Zeugnis.
+need / requirement,Bedürfnis,das,-nis suffix,Nouns ending in -nis are usually das: das Ergebnis das Geheimnis das Zeugnis.
+understanding,Verständnis,das,-nis suffix,Nouns ending in -nis are usually das: das Ergebnis das Geheimnis das Zeugnis.
+event / occurrence,Ereignis,das,-nis suffix,Nouns ending in -nis are usually das: das Ergebnis das Geheimnis das Zeugnis.
+experience (lived),Erlebnis,das,-nis suffix,Nouns ending in -nis are usually das: das Ergebnis das Geheimnis das Zeugnis.
+knowledge (of sth),Kenntnis,das,-nis suffix,Nouns ending in -nis are usually das: das Ergebnis das Geheimnis das Zeugnis.
+calf,Kalb,das,Young animals,Young/baby animals are often das: das Kalb das Lamm das Küken.
+lamb,Lamm,das,Young animals,Young/baby animals are often das: das Kalb das Lamm das Küken.
+chick,Küken,das,Young animals,Young/baby animals are often das: das Kalb das Lamm das Küken.
+foal,Fohlen,das,Young animals,Young/baby animals are often das: das Kalb das Lamm das Küken.
+piglet,Ferkel,das,Young animals,Young/baby animals are often das: das Kalb das Lamm das Küken.
+signal,Signal,das,-al suffix,Nouns ending in -al are often das: das Signal das Mineral das Pedal.
+mineral,Mineral,das,-al suffix,Nouns ending in -al are often das: das Signal das Mineral das Pedal.
+pedal,Pedal,das,-al suffix,Nouns ending in -al are often das: das Signal das Mineral das Pedal.
+fate / destiny,Schicksal,das,-al suffix,Nouns ending in -al are often das: das Signal das Mineral das Pedal.
+potential,Potential,das,-al suffix,Nouns ending in -al are often das: das Signal das Mineral das Pedal.
+blue (the color),Blau,das,Colors as nouns,Colors nominalized as nouns are das: das Blau das Grün das Rot.
+green (the color),Grün,das,Colors as nouns,Colors nominalized as nouns are das: das Blau das Grün das Rot.
+red (the color),Rot,das,Colors as nouns,Colors nominalized as nouns are das: das Blau das Grün das Rot.
+child,Kind,das,Common das nouns,Frequently used neuter nouns to memorize.
+book,Buch,das,Common das nouns,Frequently used neuter nouns to memorize.
+car,Auto,das,Common das nouns,Frequently used neuter nouns to memorize.
+house,Haus,das,Common das nouns,Frequently used neuter nouns to memorize.
+year,Jahr,das,Common das nouns,Frequently used neuter nouns to memorize.
+country / land,Land,das,Common das nouns,Frequently used neuter nouns to memorize.
+water,Wasser,das,Common das nouns,Frequently used neuter nouns to memorize.
+money,Geld,das,Common das nouns,Frequently used neuter nouns to memorize.
+picture / image,Bild,das,Common das nouns,Frequently used neuter nouns to memorize.
+right / law,Recht,das,Common das nouns,Frequently used neuter nouns to memorize.
+game / play,Spiel,das,Common das nouns,Frequently used neuter nouns to memorize.
+problem,Problem,das,Common das nouns,Frequently used neuter nouns to memorize.
+program,Programm,das,Common das nouns,Frequently used neuter nouns to memorize.
+piece,Stück,das,Common das nouns,Frequently used neuter nouns to memorize.
+field,Feld,das,Common das nouns,Frequently used neuter nouns to memorize.
+animal,Tier,das,Common das nouns,Frequently used neuter nouns to memorize.
+goal / destination,Ziel,das,Common das nouns,Frequently used neuter nouns to memorize.
+building,Gebäude,das,Common das nouns,Frequently used neuter nouns to memorize.
+drink / beverage,Getränk,das,Common das nouns,Frequently used neuter nouns to memorize.
+luck / happiness,Glück,das,Common das nouns,Frequently used neuter nouns to memorize.
+interest,Interesse,das,Common das nouns,Frequently used neuter nouns to memorize.
+concept,Konzept,das,Common das nouns,Frequently used neuter nouns to memorize.
+project,Projekt,das,Common das nouns,Frequently used neuter nouns to memorize.
+risk,Risiko,das,Common das nouns,Frequently used neuter nouns to memorize.
+product,Produkt,das,Common das nouns,Frequently used neuter nouns to memorize.
+bread,Brot,das,Common das nouns,Frequently used neuter nouns to memorize.
+egg,Ei,das,Common das nouns,Frequently used neuter nouns to memorize.
+meat / flesh,Fleisch,das,Common das nouns,Frequently used neuter nouns to memorize.
+vegetables,Gemüse,das,Common das nouns,Frequently used neuter nouns to memorize.
+fruit,Obst,das,Common das nouns,Frequently used neuter nouns to memorize.
+flour,Mehl,das,Common das nouns,Frequently used neuter nouns to memorize.
+bed,Bett,das,Common das nouns,Frequently used neuter nouns to memorize.
+window,Fenster,das,Common das nouns,Frequently used neuter nouns to memorize.
+room,Zimmer,das,Common das nouns,Frequently used neuter nouns to memorize.
+light,Licht,das,Common das nouns,Frequently used neuter nouns to memorize.
+roof,Dach,das,Common das nouns,Frequently used neuter nouns to memorize.
+net / network,Netz,das,Common das nouns,Frequently used neuter nouns to memorize.
+protocol / minutes,Protokoll,das,Common das nouns,Frequently used neuter nouns to memorize.
+judgement / verdict,Urteil,das,Common das nouns,Frequently used neuter nouns to memorize.
+sign / symbol,Zeichen,das,Common das nouns,Frequently used neuter nouns to memorize.
+well-being,Wohl,das,Common das nouns,Frequently used neuter nouns to memorize.
+training,Training,das,Common das nouns,Frequently used neuter nouns to memorize.
+ranking,Ranking,das,Common das nouns,Frequently used neuter nouns to memorize.
+model,Modell,das,Common das nouns,Frequently used neuter nouns to memorize.
+conversation,Gespräch,das,Common das nouns,Frequently used neuter nouns to memorize.
+example,Beispiel,das,Common das nouns,Frequently used neuter nouns to memorize.
+offer,Angebot,das,Common das nouns,Frequently used neuter nouns to memorize.`;
+
+  data['Deutsche Verben'] = `English,German,Base Verb,Mnemonic
+"to lock, conclude, finish",abschließen,schließen,ABsolute close — you lock the door and it's DONE
+"to connect, join, follow",anschließen,schließen,ANnex and connect — attach one thing to another
+"to include, enclose, lock in",einschließen,schließen,EINside the lock — shut it IN
+"to exclude, rule out",ausschließen,schließen,AUSt out — locked OUT
+to short-circuit,kurzschließen,schließen,KURZ = short + close = short-circuit
+"to lock, seal, close off",verschließen,schließen,VERseal — lock it up completely
+"to unite, merge, join together",zusammenschließen,schließen,ZUSAMMEN = together + close = merge/unite
+"to acquire, obtain (formal)",erwerben,erwerben,ER- = achieve + werben → earn/win something
+"to purchase (formal, archaic)",erstehen,erstehen,ER- + stehen → to stand for a price = buy
+"to get, obtain, procure",besorgen,besorgen,BE- + sorgen → take care of getting it
+"to buy, purchase, acquire",anschaffen,anschaffen,AN- + schaffen → bring something into existence by buying
+"to add, buy additionally",zulegen,zulegen,ZU- + legen → lay something extra on top
+"to afford, treat oneself to something",sich etwas leisten,leisten,LEISTEN = to perform → you can perform the purchase
+"to treat oneself, allow oneself something",sich etwas gönnen,gönnen,GÖNNEN = to grant → grant yourself a treat
+to stock up on something,sich mit etwas eindecken,eindecken,EIN- + decken → cover yourself IN supplies
+"to lift up, pick up",hochheben,heben,HOCH = high + heben = lift HIGH
+"to fix, resolve, remedy",beheben,heben,BE- + heben → lift the problem away
+"to lift off, withdraw money, stand out",abheben,heben,AB- = off + heben → lift OFF
+"to relieve of duty, remove from office",entheben,heben,ENT- = away + heben → lift someone OUT of their role
+"to emphasize, highlight",hervorheben,heben,HERVOR = forth + heben → lift it FORTH into view
+to strain oneself lifting,sich verheben,heben,VER- (wrong) + heben → lift the WRONG way and hurt yourself
+"to raise, levy, elevate",erheben,heben,ER- (intensive) + heben → lift UP formally
+"to rise, stand up, revolt",sich erheben,heben,Reflexive: lift YOURSELF up → rise/revolt
+"to pick up, keep, abolish, cancel out",aufheben,heben,AUF- = up + heben → pick up / store / nullify
+"to lift, raise (prices, levels)",anheben,heben,AN- = at/on + heben → nudge it UP slightly
+"to be adjacent, fit closely, be pending",anliegen,liegen,AN- = at + liegen → lying right up AGAINST something
+"to be enclosed, be attached",beiliegen,liegen,BEI- = beside + liegen → lying BESIDE (in an envelope)
+"to occupy, cover, prove, enroll in",belegen,liegen,BE- + legen → lay something over/on top
+"to be ready, be laid out",bereitliegen,liegen,BEREIT = ready + liegen → lying there READY
+"to succumb to, fall victim to",erliegen,liegen,ER- (completion) + liegen → lie down FOR GOOD = succumb
+"to be wrong, be mistaken",falschliegen,liegen,FALSCH = wrong + liegen → lying in the WRONG place
+"to be off, be incorrect",danebenliegen,liegen,DANEBEN = beside/off + liegen → lying NEXT TO the truth
+"to be far from one's mind, be unlikely",fernliegen,liegen,FERN = far + liegen → lying FAR away from your thoughts
+"to burn down, burn off",abbrennen,brennen,AB- = off/down + brennen → burn it all OFF
+to burn down to the ground,niederbrennen,brennen,NIEDER = down + brennen → burn DOWN to nothing
+"to brand, burn in",einbrennen,brennen,EIN- = in + brennen → burn it IN (branding)
+"to burn up, incinerate",verbrennen,brennen,VER- (destruction) + brennen → burn COMPLETELY away
+to burn oneself,sich verbrennen,brennen,Reflexive: the burning happens TO YOU
+"to start burning, burn (food)",anbrennen,brennen,AN- = on + brennen → fire starts ON
+"to flare up, ignite (conflict, passion)",entbrennen,brennen,ENT- = outward + brennen → suddenly burst INTO flame
+"to blow a fuse, run away, burn through",durchbrennen,brennen,DURCH- = through + brennen → burn all the way THROUGH
+"to approach, accommodate, meet halfway",entgegenkommen,entgegen-,ENTGEGEN = toward + kommen → come TOWARD each other
+"to oppose, set against",entgegenstellen,entgegen-,ENTGEGEN + stellen → place yourself AGAINST it
+"to show, bring toward (respect etc.)",entgegenbringen,entgegen-,ENTGEGEN + bringen → bring something TOWARD someone
+to eagerly anticipate,entgegenfiebern,entgegen-,ENTGEGEN + fiebern → fever with anticipation TOWARD an event
+"to look forward to, await",entgegensehen,entgegen-,ENTGEGEN + sehen → look TOWARD something coming
+"to counter, oppose",entgegensetzen,entgegen-,ENTGEGEN + setzen → set something AGAINST it
+"to confront, stand up to",entgegentreten,entgegen-,ENTGEGEN + treten → step TOWARD/AGAINST someone
+"to go smoothly, work out",klargehen,gehen,KLAR = clear + gehen → going CLEAR (smooth sailing)
+"to concern, approach, turn on, begin",angehen,gehen,AN- = on + gehen → go ON or go AT someone
+"to get started on, answer (phone)",drangehen,gehen,DRAN = at it + gehen → go AT it / get ON the phone
+"to escape, avoid, miss out on",entgehen,gehen,ENT- = away + gehen → go AWAY from (slip away)
+"to be used up, die, go toward",draufgehen,gehen,DRAUF = on it + gehen → go ON something (be consumed)
+"to go out, run out, assume",ausgehen,gehen,AUS- = out + gehen → go OUT
+"to go wrong, fail",schiefgehen,gehen,SCHIEF = crooked + gehen → go CROOKED
+"to go smoothly, work out",glattgehen,gehen,GLATT = smooth + gehen → go SMOOTH
+"to affect deeply, touch emotionally",nahegehen,gehen,NAH = near + gehen → goes very CLOSE to the heart
+"to commit (crime), walk along, celebrate",begehen,gehen,BE- + gehen → walk all OVER something
+"to leave, come off, deviate",abgehen,gehen,AB- = off + gehen → go OFF
+"to deceive, go behind someone's back",hintergehen,gehen,HINTER = behind + gehen → go BEHIND someone's back
+"to go bankrupt, go bust",pleitegehen,gehen,PLEITE = broke + gehen → go BROKE
+"to deal with, handle, go around, avoid",umgehen,gehen,UM- = around + gehen → go AROUND`;
+
+  return data[tabName] || null;
+}
+
 </script>
 </body>
 </html>
