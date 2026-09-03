@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Shelf — Home Library Catalog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --walnut: #241a12;
+    --walnut-2: #3c2c1e;
+    --walnut-3: #5a4530;
+    --card: #f2e8d0;
+    --card-2: #e9dab5;
+    --card-shadow: #cdb98c;
+    --ink: #241c15;
+    --ink-soft: #5c5142;
+    --brass: #b5892b;
+    --brass-light: #d8ae55;
+    --stamp: #9a3b34;
+    --teal: #3f5a54;
+    --paper-line: rgba(36,28,21,0.08);
+    --radius-card: 3px;
+  }
+
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse at top, #4a3625 0%, var(--walnut) 55%);
+    color: var(--ink);
+    font-family: 'Lora', serif;
+    min-height: 100vh;
+    padding-bottom: 4rem;
+  }
+
+  /* ---------- Header: drawer front ---------- */
+  header.drawer{
+    position: relative;
+    background: linear-gradient(180deg, var(--walnut-3) 0%, var(--walnut-2) 55%, var(--walnut) 100%);
+    border-bottom: 6px solid var(--walnut);
+    box-shadow: 0 10px 24px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06);
+    padding: 2.6rem 1.5rem 1.4rem;
+    text-align: center;
+  }
+  header.drawer::before{
+    /* wood grain hint */
+    content:"";
+    position:absolute; inset:0;
+    background-image: repeating-linear-gradient(90deg, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 1px, transparent 1px, transparent 6px);
+    opacity: 0.5;
+    pointer-events:none;
+  }
+  .label-holder{
+    position: relative;
+    display:inline-flex;
+    align-items:center;
+    gap: 0.9rem;
+    background: var(--brass);
+    background: linear-gradient(180deg, var(--brass-light), var(--brass));
+    padding: 0.55rem 1.6rem;
+    border-radius: 2px;
+    box-shadow: 0 3px 0 #7c5c1a, 0 6px 10px rgba(0,0,0,0.4);
+  }
+  .label-holder .pull{
+    width: 14px; height: 14px;
+    background: radial-gradient(circle at 35% 30%, #fff6df, #7c5c1a 70%);
+    border-radius: 50%;
+    box-shadow: inset 0 0 3px rgba(0,0,0,0.5);
+  }
+  header.drawer h1{
+    font-family: 'Special Elite', monospace;
+    letter-spacing: 0.06em;
+    font-size: clamp(1.3rem, 3.2vw, 1.9rem);
+    color: #2b1c08;
+    margin: 0;
+    text-transform: uppercase;
+  }
+  header.drawer p.sub{
+    position: relative;
+    margin: 0.9rem 0 0;
+    color: #cdb98c;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  #book-count{ color:#e9c874; }
+
+  /* ---------- Main card-stock surface ---------- */
+  main{
+    background: var(--card);
+    background-image:
+      linear-gradient(var(--paper-line) 1px, transparent 1px);
+    background-size: 100% 2.1rem;
+    max-width: 1180px;
+    margin: 0 auto;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+    min-height: 60vh;
+    padding: 1.6rem 1.6rem 2.4rem;
+    border-radius: 0 0 6px 6px;
+  }
+
+  /* ---------- Controls ---------- */
+  .controls{
+    display:flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .section-label{
+    font-family: 'Special Elite', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--stamp);
+    margin: 0 0 0.6rem;
+    display:flex;
+    align-items:center;
+    gap: 0.6rem;
+  }
+  .section-label::after{
+    content:"";
+    flex:1;
+    height:1px;
+    background: repeating-linear-gradient(90deg, var(--card-shadow) 0 4px, transparent 4px 8px);
+  }
+
+  .filter-bar{
+    display:flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.7rem;
+  }
+  .clear-filters{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0.55rem 0.2rem;
+    margin-left: auto;
+  }
+  .clear-filters:hover{ color: var(--stamp); }
+  .dropdown{ position: relative; }
+  .dropdown-toggle{
+    display:flex;
+    align-items:center;
+    gap: 0.55rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.74rem;
+    letter-spacing: 0.02em;
+    background: #fffaf0;
+    border: 1px solid var(--card-shadow);
+    border-radius: 4px;
+    padding: 0.55rem 0.8rem;
+    color: var(--ink);
+    cursor: pointer;
+    min-width: 200px;
+    text-align: left;
+  }
+  .dropdown-toggle:hover{ border-color: var(--teal); }
+  .dropdown.open .dropdown-toggle{
+    border-color: var(--teal);
+    box-shadow: 0 0 0 2px rgba(63,90,84,0.15);
+  }
+  .dropdown-toggle .dd-label{
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    font-size: 0.66rem;
+    letter-spacing: 0.08em;
+  }
+  .dropdown-toggle .dd-value{
+    font-family: 'Lora', serif;
+    font-weight: 600;
+    font-style: normal;
+    flex: 1;
+    color: var(--ink);
+  }
+  .dropdown-toggle svg{
+    flex: none;
+    transition: transform .15s ease;
+    opacity: 0.6;
+  }
+  .dropdown.open .dropdown-toggle svg{ transform: rotate(180deg); }
+
+  .dropdown-panel{
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 20;
+    background: var(--card);
+    border: 1px solid var(--card-shadow);
+    border-radius: 4px;
+    box-shadow: 0 12px 24px rgba(36,26,15,0.35);
+    padding: 0.8rem;
+    width: max(280px, 100%);
+    max-height: 280px;
+    overflow-y: auto;
+    display: none;
+  }
+  .dropdown.open .dropdown-panel{ display: block; }
+  #category-panel{
+    width: min(560px, 88vw);
+    max-height: 380px;
+  }
+
+  .search-slot{
+    display:flex;
+    align-items:center;
+    gap: 0.7rem;
+    background: #fffaf0;
+    border: 1px solid var(--card-shadow);
+    border-left: 5px solid var(--stamp);
+    border-radius: 2px;
+    padding: 0.75rem 1rem;
+    box-shadow: inset 0 1px 4px rgba(0,0,0,0.08);
+  }
+  .search-slot svg{ flex: none; opacity: 0.55; }
+  .search-slot input{
+    flex:1;
+    border:none;
+    background:transparent;
+    font-family: 'Lora', serif;
+    font-size: 1.05rem;
+    color: var(--ink);
+    outline: none;
+  }
+  .search-slot input::placeholder{ color: #9c8f78; font-style: italic; }
+  .search-hint{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding-left: 0.3rem;
+  }
+
+  .chip-row{ display:flex; flex-wrap: wrap; gap: 0.4rem; }
+  .chip{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+    padding: 0.32rem 0.65rem;
+    border-radius: 999px;
+    border: 1px solid var(--card-shadow);
+    background: #fffaf0;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: all .12s ease;
+    user-select: none;
+  }
+  .chip:hover{ border-color: var(--teal); color: var(--teal); }
+  .chip.active{
+    background: var(--teal);
+    border-color: var(--teal);
+    color: #fdf6e3;
+  }
+  .chip.active.lang{ background: var(--stamp); border-color: var(--stamp); }
+
+  .clear-filters{
+    align-self: flex-start;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+  }
+  .clear-filters:hover{ color: var(--stamp); }
+
+  .results-meta{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.04em;
+    margin: 0.2rem 0 1rem;
+    text-transform: uppercase;
+  }
+
+  /* ---------- Grid ---------- */
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1.3rem 1.1rem;
+  }
+
+  .card{
+    position: relative;
+    background: #fffdf6;
+    border: 1px solid var(--card-shadow);
+    border-radius: var(--radius-card);
+    box-shadow: 0 3px 8px rgba(36,26,15,0.18);
+    display:flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .card:hover{
+    transform: translateY(-3px);
+    box-shadow: 0 10px 18px rgba(36,26,15,0.3);
+  }
+  .card .hole{
+    position:absolute; top: 6px; left: 6px;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff, #c9bb99 60%, #8a7a58 100%);
+    box-shadow: inset 0 0 2px rgba(0,0,0,0.5);
+    z-index: 3;
+  }
+
+  .cover-wrap{
+    position: relative;
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    background: #ece0c4;
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden;
+  }
+  .cover-wrap img{
+    width:100%; height:100%; object-fit: cover;
+    display:block;
+    opacity:0;
+    transition: opacity .35s ease;
+  }
+  .cover-wrap img.loaded{ opacity: 1; }
+
+  .spine-fallback{
+    width:100%; height:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding: 0.7rem 0.5rem;
+    font-family: 'Special Elite', monospace;
+    line-height: 1.25;
+  }
+  .spine-fallback .st{
+    font-size: 0.78rem;
+    color: rgba(0,0,0,0.72);
+    max-height: 4.6em;
+    overflow:hidden;
+  }
+  .spine-fallback .sa{
+    margin-top: 0.5rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.62rem;
+    color: rgba(0,0,0,0.55);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .card-body{
+    padding: 0.65rem 0.7rem 0.7rem;
+    display:flex;
+    flex-direction:column;
+    gap: 0.3rem;
+    flex: 1;
+  }
+  .card-title{
+    font-family:'Lora', serif;
+    font-weight: 600;
+    font-size: 0.86rem;
+    line-height: 1.25;
+    color: var(--ink);
+  }
+  .card-author{
+    font-style: italic;
+    font-size: 0.76rem;
+    color: var(--ink-soft);
+  }
+  .card-tags{
+    margin-top: auto;
+    display:flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    padding-top: 0.4rem;
+  }
+  .tag{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.02em;
+    padding: 0.16rem 0.4rem;
+    border-radius: 3px;
+    text-transform: uppercase;
+  }
+  .tag.genre{ background: rgba(63,90,84,0.14); color: var(--teal); }
+  .tag.lang{ background: rgba(154,59,52,0.12); color: var(--stamp); }
+
+  .call-number{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.04em;
+    color: #a1907a;
+    padding: 0.35rem 0.7rem 0.55rem;
+    border-top: 1px dashed var(--card-shadow);
+    text-transform: uppercase;
+  }
+
+  /* ---------- Empty state ---------- */
+  .empty-state{
+    grid-column: 1 / -1;
+    text-align:center;
+    padding: 3.5rem 1rem;
+    font-family: 'Special Elite', monospace;
+    color: var(--ink-soft);
+  }
+  .empty-state .big{ font-size: 1.1rem; color: var(--stamp); margin-bottom: 0.5rem; }
+
+  footer{
+    text-align:center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    color: #cdb98c;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 1.6rem 1rem 0;
+  }
+
+  @media (max-width: 560px){
+    header.drawer{ padding: 2rem 1rem 1.1rem; }
+    main{ padding: 1.2rem 0.9rem 1.8rem; }
+    .grid{ grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 1rem 0.8rem; }
+  }
+
+  :focus-visible{ outline: 2px solid var(--stamp); outline-offset: 2px; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition: none !important; scroll-behavior: auto !important; }
+  }
+
+  /* ---------- Tab bar ---------- */
+  .tab-bar{
+    position: relative;
+    display:inline-flex;
+    gap: 0.4rem;
+    margin-top: 1rem;
+  }
+  .tab-btn{
+    font-family: 'Special Elite', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #e9dab5;
+    background: linear-gradient(180deg, var(--walnut-3) 0%, var(--walnut-2) 100%);
+    border: 1px solid rgba(213,180,120,0.35);
+    border-bottom: none;
+    border-radius: 5px 5px 0 0;
+    padding: 0.5rem 1.1rem 0.45rem;
+    cursor: pointer;
+    opacity: 0.72;
+    transition: opacity .15s ease, background .15s ease;
+  }
+  .tab-btn:hover{ opacity: 0.92; }
+  .tab-btn.active{
+    opacity: 1;
+    background: var(--card);
+    color: var(--stamp);
+    border-color: var(--card-shadow);
+    box-shadow: 0 -3px 8px rgba(0,0,0,0.25);
+  }
+
+  .cat-view{ }
+
+  .tag.format{ background: rgba(181,137,43,0.16); color: #8a641c; }
+  .tag.location{ background: rgba(154,59,52,0.12); color: var(--stamp); }
+
+  .format-ribbon{
+    position:absolute; top: 6px; right: 6px;
+    z-index: 3;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.56rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.16rem 0.4rem;
+    border-radius: 3px;
+    color: #fdf6e3;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+  .format-ribbon.dvd{ background: var(--teal); }
+  .format-ribbon.bluray{ background: #2a4b8d; }
+
+  @media (max-width: 560px){
+    .tab-btn{ padding: 0.45rem 0.8rem 0.4rem; font-size: 0.66rem; }
+  }
+
+</style>
+</head>
+<body>
+
+<header class="drawer">
+  <div class="label-holder">
+    <span class="pull"></span>
+    <h1>The Shelf</h1>
+  </div>
+  <p class="sub"><span id="item-count">—</span> <span id="item-label">volumes catalogued</span></p>
+  <div class="tab-bar" role="tablist">
+    <button type="button" class="tab-btn active" data-tab="books" role="tab" aria-selected="true">Books</button>
+    <button type="button" class="tab-btn" data-tab="movies" role="tab" aria-selected="false">Movies &amp; TV</button>
+  </div>
+</header>
+
+<main>
+
+  <section id="books-view" class="cat-view">
+    <div class="controls">
+
+      <div id="search-panel">
+        <p class="section-label">Search</p>
+        <div class="search-slot">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="search-input" placeholder="Search by title or author…" autocomplete="off">
+        </div>
+        <p class="search-hint">Type a title, a partial title, or an author's name</p>
+      </div>
+
+      <div id="browse-panel">
+        <p class="section-label">Browse</p>
+        <div class="filter-bar">
+          <div class="dropdown" id="category-dropdown">
+            <button type="button" class="dropdown-toggle" id="category-toggle" aria-expanded="false">
+              <span class="dd-label">Category</span>
+              <span class="dd-value" id="category-value">All</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="dropdown-panel" id="category-panel">
+              <div class="chip-row" id="genre-chips"></div>
+            </div>
+          </div>
+          <div class="dropdown" id="language-dropdown">
+            <button type="button" class="dropdown-toggle" id="language-toggle" aria-expanded="false">
+              <span class="dd-label">Language</span>
+              <span class="dd-value" id="language-value">All</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="dropdown-panel" id="language-panel">
+              <div class="chip-row" id="lang-chips"></div>
+            </div>
+          </div>
+          <button type="button" class="clear-filters" id="clear-filters">Clear filters</button>
+        </div>
+      </div>
+
+    </div>
+
+    <p class="results-meta" id="results-meta"></p>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section id="movies-view" class="cat-view" style="display:none;">
+    <div class="controls">
+
+      <div id="movie-search-panel">
+        <p class="section-label">Search</p>
+        <div class="search-slot">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="movie-search-input" placeholder="Search by title…" autocomplete="off">
+        </div>
+        <p class="search-hint">Type a title or partial title</p>
+      </div>
+
+      <div id="movie-browse-panel">
+        <p class="section-label">Browse</p>
+        <div class="filter-bar">
+          <div class="dropdown" id="movie-category-dropdown">
+            <button type="button" class="dropdown-toggle" id="movie-category-toggle" aria-expanded="false">
+              <span class="dd-label">Genre</span>
+              <span class="dd-value" id="movie-category-value">All</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="dropdown-panel" id="movie-category-panel">
+              <div class="chip-row" id="movie-genre-chips"></div>
+            </div>
+          </div>
+          <div class="dropdown" id="movie-format-dropdown">
+            <button type="button" class="dropdown-toggle" id="movie-format-toggle" aria-expanded="false">
+              <span class="dd-label">Format</span>
+              <span class="dd-value" id="movie-format-value">All</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="dropdown-panel" id="movie-format-panel">
+              <div class="chip-row" id="movie-format-chips"></div>
+            </div>
+          </div>
+          <div class="dropdown" id="movie-location-dropdown">
+            <button type="button" class="dropdown-toggle" id="movie-location-toggle" aria-expanded="false">
+              <span class="dd-label">Location</span>
+              <span class="dd-value" id="movie-location-value">All</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="dropdown-panel" id="movie-location-panel">
+              <div class="chip-row" id="movie-location-chips"></div>
+            </div>
+          </div>
+          <button type="button" class="clear-filters" id="movie-clear-filters">Clear filters</button>
+        </div>
+      </div>
+
+    </div>
+
+    <p class="results-meta" id="movie-results-meta"></p>
+    <div class="grid" id="movie-grid"></div>
+  </section>
+
+</main>
+
+<footer>
+  Home library catalog · book covers via Open Library &amp; Google Books · movie/TV art via iTunes Search API
+  <div id="cover-status" style="margin-top:0.4rem; opacity:0.85;"></div>
+</footer>
+
+<script id="book-data" type="application/json">
+[{"title": "God Is Not One", "author": "", "location": "Photo 1 (front)", "genre": "Religion", "language": "English"}, {"title": "Out From Boneville", "author": "Jeff Smith", "location": "Photo 1 (front)", "genre": "Graphic Novel", "language": "English"}, {"title": "Thoughts Without a Thinker", "author": "", "location": "Photo 1 (front)", "genre": "Psychology/Buddhism", "language": "English"}, {"title": "千と千尋の神隠し (Spirited Away) Film Comic, vols. 1–5", "author": "Miyazaki Hayao", "location": "Photo 1 (front)", "genre": "Manga/Film", "language": "Japanese"}, {"title": "Teachers: The Struggle Is Real", "author": "Bored Teachers", "location": "Photo 1 (front)", "genre": "Humor", "language": "English"}, {"title": "Lithuanian-English / English-Lithuanian dictionary", "author": "?2 (author spelling uncertain)", "location": "Photo 1 (front)", "genre": "Reference/Dictionary", "language": "Lithuanian/English"}, {"title": "A Chance of Love", "author": "", "location": "Photo 1 (front)", "genre": "Fiction", "language": "English"}, {"title": "Lietuviški-Angliški Pasikalbėjimai", "author": "", "location": "Photo 1 (front)", "genre": "Reference/Phrasebook", "language": "Lithuanian/English"}, {"title": "Safe in the Shepherd's Arms", "author": "Max Lucado", "location": "Photo 1 (front)", "genre": "Religion", "language": "English"}, {"title": "Poisonous Science", "author": "Henry Forman", "location": "Photo 1 (front)", "genre": "Nonfiction", "language": "English"}, {"title": "Psychological Stresses and Coping Resources of Caregivers of Ventilator-Assisted Children", "author": "Thomas Keens", "location": "Photo 1 (front)", "genre": "Medical/Psychology", "language": "English"}, {"title": "Yosemite and the Range of Light", "author": "Ansel Adams", "location": "Photo 2 (front)", "genre": "Photography/Art", "language": "English"}, {"title": "The Brothers Karamazov", "author": "Fyodor Dostoevsky", "location": "Photo 2 (front)", "genre": "Fiction/Classics", "language": "English"}, {"title": "Modern Orthodox Saints", "author": "Cavarnos", "location": "Photo 2 (front)", "genre": "Religion", "language": "English"}, {"title": "Harry Potter und der Stein der Weisen (hardcover)", "author": "J.K. Rowling", "location": "Photo 2 (front)", "genre": "Fantasy", "language": "German"}, {"title": "Harry Potter und die Kammer des Schreckens (hardcover)", "author": "J.K. Rowling", "location": "Photo 2 (front)", "genre": "Fantasy", "language": "German"}, {"title": "See America", "author": "Creative Action Network", "location": "Photo 2 (front)", "genre": "Travel/Art", "language": "English"}, {"title": "Harry Potter und der Stein der Weisen (paperback)", "author": "J.K. Rowling", "location": "Photo 2 (front)", "genre": "Fantasy", "language": "German"}, {"title": "Harry Potter und der Gefangene von Askaban", "author": "J.K. Rowling", "location": "Photo 2 (front)", "genre": "Fantasy", "language": "German"}, {"title": "Harry Potter und die Kammer des Schreckens (paperback)", "author": "J.K. Rowling", "location": "Photo 2 (front)", "genre": "Fantasy", "language": "German"}, {"title": "A Tale of Two Cities", "author": "Charles Dickens", "location": "Photo 2 (front)", "genre": "Fiction/Classics", "language": "English"}, {"title": "Harry Potter and the Sorcerer's Stone", "author": "J.K. Rowling", "location": "Photo 2 (front)", "genre": "Fantasy", "language": "English"}, {"title": "Harry Potter and the Chamber of Secrets", "author": "J.K. Rowling", "location": "Photo 2 (front)", "genre": "Fantasy", "language": "English"}, {"title": "Harry Potter and the Prisoner of Azkaban", "author": "J.K. Rowling", "location": "Photo 2 (front)", "genre": "Fantasy", "language": "English"}, {"title": "Harry Potter and the Goblet of Fire", "author": "J.K. Rowling", "location": "Photo 2 (front)", "genre": "Fantasy", "language": "English"}, {"title": "Harry Potter and the Order of the Phoenix", "author": "J.K. Rowling", "location": "Photo 2 (front)", "genre": "Fantasy", "language": "English"}, {"title": "Love You Forever", "author": "Robert Munsch", "location": "Photo 2 (front)", "genre": "Children's", "language": "English"}, {"title": "Beginning Indonesian Through Self-Instruction, Book 1", "author": "John U. Wolff, Dede Oetomo, Daniel Fietkiewicz", "location": "Photo 2 (front)", "genre": "Language Learning", "language": "English/Indonesian"}, {"title": "A Day in the Life of Marlon Bundo", "author": "Bundo, Twiss, Keller", "location": "Photo 2 (front)", "genre": "Children's/Satire", "language": "English"}, {"title": "This Land Is Their Land", "author": "David J. Silverman", "location": "Photo 3 (front)", "genre": "History", "language": "English"}, {"title": "Guten Tag: A German Language Course", "author": "Langenscheidt", "location": "Photo 3 (front)", "genre": "Language Learning", "language": "German/English"}, {"title": "Differ We Must", "author": "Steve Inskeep", "location": "Photo 3 (front)", "genre": "History", "language": "English"}, {"title": "1Q84", "author": "Haruki Murakami", "location": "Photo 3 (front)", "genre": "Fiction", "language": "English"}, {"title": "A History of Denmark", "author": "Knud J.V. Jespersen", "location": "Photo 3 (front)", "genre": "History", "language": "English"}, {"title": "Notes of a Dirty Old Man", "author": "Charles Bukowski", "location": "Photo 3 (front)", "genre": "Fiction", "language": "English"}, {"title": "Foundation", "author": "Isaac Asimov", "location": "Photo 3 (front)", "genre": "Science Fiction", "language": "English"}, {"title": "Summer of the Big Bachi", "author": "Naomi Hirahara", "location": "Photo 3 (front)", "genre": "Fiction/Mystery", "language": "English"}, {"title": "The Catholic Gardener's Spiritual Almanac", "author": "", "location": "Photo 3 (front)", "genre": "Religion/Gardening", "language": "English"}, {"title": "A Promised Land", "author": "Barack Obama", "location": "Photo 3 (front)", "genre": "Memoir", "language": "English"}, {"title": "Primates", "author": "Jim Ottaviani", "location": "Photo 3 (front)", "genre": "Graphic Novel/Nonfiction", "language": "English"}, {"title": "Barking to the Choir", "author": "Gregory Boyle", "location": "Photo 3 (front)", "genre": "Memoir/Religion", "language": "English"}, {"title": "There There", "author": "Tommy Orange", "location": "Photo 3 (front)", "genre": "Fiction", "language": "English"}, {"title": "Thinking, Fast and Slow", "author": "Daniel Kahneman", "location": "Photo 3 (front)", "genre": "Psychology", "language": "English"}, {"title": "Basic Spanish", "author": "Lebredo/Mena-Ayllón", "location": "Photo 3 (front)", "genre": "Language Learning", "language": "English/Spanish"}, {"title": "Farsighted", "author": "Steven Johnson", "location": "Photo 3 (front)", "genre": "Nonfiction", "language": "English"}, {"title": "My Life Among Humans", "author": "Jed McGowan", "location": "Photo 4 (front)", "genre": "Graphic Novel/Humor", "language": "English"}, {"title": "Langenscheidts Spanisch", "author": "", "location": "Photo 4 (front)", "genre": "Language Learning", "language": "German/Spanish"}, {"title": "Parable of the Talents", "author": "Octavia E. Butler", "location": "Photo 4 (front)", "genre": "Science Fiction", "language": "English"}, {"title": "West of Jim Crow", "author": "Hudson", "location": "Photo 4 (front)", "genre": "History", "language": "English"}, {"title": "Norman Rockwell: My Adventures as an Illustrator", "author": "", "location": "Photo 4 (front)", "genre": "Art/Memoir", "language": "English"}, {"title": "Then She Was Gone", "author": "Lisa Jewell", "location": "Photo 4 (front)", "genre": "Fiction/Thriller", "language": "English"}, {"title": "Das Spiel des Engels", "author": "Carlos Ruiz Zafón", "location": "Photo 4 (front)", "genre": "Fiction", "language": "German"}, {"title": "Extremely Loud and Incredibly Close", "author": "Jonathan Safran Foer", "location": "Photo 4 (front)", "genre": "Fiction", "language": "English"}, {"title": "Vanished Kingdoms", "author": "Norman Davies", "location": "Photo 4 (front)", "genre": "History", "language": "English"}, {"title": "The Lauras", "author": "Sara Taylor", "location": "Photo 4 (front)", "genre": "Fiction", "language": "English"}, {"title": "Maus II", "author": "Art Spiegelman", "location": "Photo 4 (front)", "genre": "Graphic Novel", "language": "English"}, {"title": "Maus I", "author": "Art Spiegelman", "location": "Photo 4 (front)", "genre": "Graphic Novel", "language": "English"}, {"title": "Blood and Iron", "author": "Katja Hoyer", "location": "Photo 4 (front)", "genre": "History", "language": "English"}, {"title": "The Prodigal Tongue", "author": "Lynne Murphy", "location": "Photo 4 (front)", "genre": "Language/Linguistics", "language": "English"}, {"title": "The Last Temptation of Christ", "author": "Nikos Kazantzakis", "location": "Photo 4 (front)", "genre": "Fiction", "language": "English"}, {"title": "Band of Brothers", "author": "Stephen E. Ambrose", "location": "Photo 4 (front)", "genre": "History", "language": "English"}, {"title": "Memorial", "author": "Bryan Washington", "location": "Photo 5 (front)", "genre": "Fiction", "language": "English"}, {"title": "Dresden: Tuesday, Feb. 13, 1945", "author": "Frederick Taylor", "location": "Photo 5 (front)", "genre": "History", "language": "English"}, {"title": "The Great Apes", "author": "Chris Herzfeld", "location": "Photo 5 (front)", "genre": "Nature/Science", "language": "English"}, {"title": "Usagi Yojimbo Saga, Vol. 1", "author": "Stan Sakai", "location": "Photo 5 (front)", "genre": "Graphic Novel", "language": "English"}, {"title": "Catch-22", "author": "Joseph Heller", "location": "Photo 5 (front)", "genre": "Fiction/Classics", "language": "English"}, {"title": "Cincinnati's Germans: Before World War I", "author": "Tolzmann", "location": "Photo 5 (front)", "genre": "History", "language": "English"}, {"title": "Advanced Short Stories in German", "author": "", "location": "Photo 5 (front)", "genre": "Language Learning", "language": "German"}, {"title": "Silent Spring", "author": "Rachel Carson", "location": "Photo 5 (front)", "genre": "Science/Nature", "language": "English"}, {"title": "The Paradox of Choice", "author": "Barry Schwartz", "location": "Photo 5 (front)", "genre": "Psychology", "language": "English"}, {"title": "It Doesn't Have to Be Crazy at Work", "author": "Jason Fried & David Heinemeier Hansson", "location": "Photo 5 (front)", "genre": "Business", "language": "English"}, {"title": "Brief Answers to the Big Questions", "author": "Stephen Hawking", "location": "Photo 5 (front)", "genre": "Science", "language": "English"}, {"title": "The Chumash World at European Contact", "author": "Lynn Gamble", "location": "Photo 5 (front)", "genre": "History/Anthropology", "language": "English"}, {"title": "Deadeye Dick", "author": "Kurt Vonnegut", "location": "Photo 5 (front)", "genre": "Fiction", "language": "English"}, {"title": "Of Gods and Men: Studies in Lithuanian Mythology", "author": "Algirdas J. Greimas", "location": "Photo 5 (front)", "genre": "Mythology", "language": "English"}, {"title": "Pediatric Pulmonology, Asthma, and Sleep Medicine", "author": "AAP", "location": "Photo 5 (front)", "genre": "Medical/Reference", "language": "English"}, {"title": "Babbitt", "author": "", "location": "Photo 5 (front)", "genre": "Fiction/Classics", "language": "English"}, {"title": "Adventures of Tom Sawyer", "author": "Mark Twain", "location": "Photo 5 (front)", "genre": "Fiction/Classics", "language": "English"}, {"title": "Tuck Everlasting", "author": "Natalie Babbitt", "location": "Photo 5 (front)", "genre": "Children's/YA", "language": "English"}, {"title": "Film Art: An Introduction", "author": "Bordwell & Thompson", "location": "Photo 6 (front)", "genre": "Film Studies", "language": "English"}, {"title": "Atlas Obscura", "author": "Foer, Thuras, Morton", "location": "Photo 6 (front)", "genre": "Travel/Reference", "language": "English"}, {"title": "The Sommelier Prep Course", "author": "Gibson", "location": "Photo 6 (front)", "genre": "Wine/Reference", "language": "English"}, {"title": "Kunst!", "author": "Disney Press", "location": "Photo 6 (front)", "genre": "Children's", "language": "German"}, {"title": "Alice in Wonderland", "author": "Scieszka/Blair", "location": "Photo 6 (front)", "genre": "Children's", "language": "English"}, {"title": "Cinderella", "author": "Rylant/Blair", "location": "Photo 6 (front)", "genre": "Children's", "language": "English"}, {"title": "Peter Pan", "author": "Barry & Pearson/Blair", "location": "Photo 6 (front)", "genre": "Children's", "language": "English"}, {"title": "Nutcracker", "author": "E.T.A. Hoffmann, illus. Maurice Sendak", "location": "Photo 6 (front)", "genre": "Children's/Classics", "language": "English"}, {"title": "Excellence Through Equity", "author": "Blankstein & Noguera", "location": "Photo 6 (front)", "genre": "Education", "language": "English"}, {"title": "Orangutan Odyssey", "author": "Galdikas/Briggs", "location": "Photo 6 (front)", "genre": "Nature/Science", "language": "English"}, {"title": "Dresden: Architektur und Kunst", "author": "", "location": "Photo 6 (front)", "genre": "Art/Architecture", "language": "German"}, {"title": "Erlebnisreise durch Sachsen", "author": "", "location": "Photo 6 (front)", "genre": "Travel", "language": "German"}, {"title": "Our Universe", "author": "Roy A. Gallant", "location": "Photo 6 (front)", "genre": "Science", "language": "English"}, {"title": "The Art of Walt Disney", "author": "Finch", "location": "Photo 6 (front)", "genre": "Art", "language": "English"}, {"title": "100 Years of Hollywood", "author": "Krenz", "location": "Photo 6 (front)", "genre": "Film", "language": "English"}, {"title": "Doodling with Jim Henson", "author": "", "location": "Photo 6 (front)", "genre": "Art", "language": "English"}, {"title": "Adomas Galdikas", "author": "Willard", "location": "Photo 6 (front)", "genre": "Art", "language": "English"}, {"title": "The Golden Age of Children's Book Illustration", "author": "Richard Dalby", "location": "Photo 6 (front)", "genre": "Art", "language": "English"}, {"title": "The Minimalist Woodworker", "author": "Vic Tesolin", "location": "Photo 6 (front)", "genre": "Craft/DIY", "language": "English"}, {"title": "The Art of Ill Will: Political Cartoons", "author": "", "location": "Photo 6 (front)", "genre": "Art/Politics", "language": "English"}, {"title": "Drawing People: How to Portray the Clothed Figure", "author": "Barbara Bradley", "location": "Photo 6 (front)", "genre": "Art Instruction", "language": "English"}, {"title": "Among the Orangutans", "author": "Gallardo", "location": "Photo 6 (front)", "genre": "Nature/Science", "language": "English"}, {"title": "The Years of Rice and Salt", "author": "Kim Stanley Robinson", "location": "Back 1", "genre": "Science Fiction", "language": "English"}, {"title": "Murder on the Orient Express", "author": "Agatha Christie", "location": "Back 1", "genre": "Fiction/Mystery", "language": "English"}, {"title": "Einfaches Leben", "author": "?5 (author \"Denlinger\" uncertain)", "location": "Back 1", "genre": "Nonfiction", "language": "German"}, {"title": "Walking L.A.", "author": "Harris", "location": "Back 1", "genre": "Travel", "language": "English"}, {"title": "Paris Day by Day", "author": "New Penguin/Frommer's", "location": "Back 1", "genre": "Travel", "language": "English"}, {"title": "DDR Design", "author": "Taschen, Icons series", "location": "Back 1", "genre": "Design/Art", "language": "English"}, {"title": "From Reverence to Rape", "author": "Molly Haskell", "location": "Back 1", "genre": "Film Criticism", "language": "English"}, {"title": "Let the Circle Be Unbroken", "author": "Mildred D. Taylor", "location": "Back 1", "genre": "Fiction/YA", "language": "English"}, {"title": "[E.L. Doctorow book, title not specified]", "author": "E.L. Doctorow", "location": "Back 1", "genre": "Fiction", "language": "English"}, {"title": "Asamblea Eucaristica", "author": "", "location": "Back 1", "genre": "Religion", "language": "Spanish"}, {"title": "Anansi Boys", "author": "Neil Gaiman", "location": "Back 1", "genre": "Fantasy/Fiction", "language": "English"}, {"title": "Sweet Thursday", "author": "John Steinbeck", "location": "Back 1", "genre": "Fiction/Classics", "language": "English"}, {"title": "The Aeneid of Virgil", "author": "trans. C. Day Lewis", "location": "Back 1", "genre": "Poetry/Classics", "language": "English"}, {"title": "Neverwhere", "author": "Neil Gaiman", "location": "Back 1", "genre": "Fantasy", "language": "English"}, {"title": "The Christmas Box", "author": "Richard Paul Evans", "location": "Back 1", "genre": "Fiction", "language": "English"}, {"title": "Roman Poets of the Early Empire", "author": "", "location": "Back 1", "genre": "Poetry/Classics", "language": "English"}, {"title": "The Shadow of the Wind", "author": "Carlos Ruiz Zafón", "location": "Back 1", "genre": "Fiction", "language": "English"}, {"title": "The Angel's Game", "author": "Carlos Ruiz Zafón", "location": "Back 1", "genre": "Fiction", "language": "English"}, {"title": "Uninhabitable", "author": "Jed McGowan", "location": "Back 2 (loose)", "genre": "Graphic Novel", "language": "English"}, {"title": "Beginning Indonesian Through Self-Instruction, Book 1", "author": "John U. Wolff, Dede Oetomo, Daniel Fietkiewicz", "location": "Back 2 (loose)", "genre": "Language Learning", "language": "English/Indonesian"}, {"title": "Je T'aimerai Toujours", "author": "Robert Munsch, illus. Sheila McGraw", "location": "Back 2 (loose)", "genre": "Children's", "language": "French"}, {"title": "A Day in the Life of Marlon Bundo", "author": "Marlon Bundo with Jill Twiss, illus. EG Keller", "location": "Back 2 (loose)", "genre": "Children's/Satire", "language": "English"}, {"title": "The Sheltering Sky", "author": "Paul Bowles", "location": "Back 3", "genre": "Fiction", "language": "English"}, {"title": "Out of Africa and Shadows on the Grass", "author": "Isak Dinesen", "location": "Back 3", "genre": "Memoir", "language": "English"}, {"title": "Easy Riders, Raging Bulls", "author": "Peter Biskind", "location": "Back 3", "genre": "Film History", "language": "English"}, {"title": "A History of Our Time", "author": "Chafe & Sitkoff", "location": "Back 3", "genre": "History", "language": "English"}, {"title": "Washington's Spies", "author": "Alexander Rose", "location": "Back 3", "genre": "History", "language": "English"}, {"title": "Kanye West Owes Me $300", "author": "Jensen Karp", "location": "Back 3", "genre": "Memoir/Humor", "language": "English"}, {"title": "Day Hikes in Ventura County, California", "author": "Stone", "location": "Back 3", "genre": "Travel/Reference", "language": "English"}, {"title": "Born to Be Wild", "author": "", "location": "Back 3", "genre": "Nonfiction", "language": "English"}, {"title": "F in Exams", "author": "?8 (author \"Benson\" uncertain)", "location": "Back 3", "genre": "Humor", "language": "English"}, {"title": "Don't Throw It, Grow It!", "author": "Peterson & Selsam", "location": "Back 3", "genre": "Gardening", "language": "English"}, {"title": "Soppy", "author": "", "location": "Back 3", "genre": "Graphic Novel/Comic", "language": "English"}, {"title": "Wicked Plants", "author": "Amy Stewart", "location": "Back 3", "genre": "Nature", "language": "English"}, {"title": "Harry Potter and the Half-Blood Prince (Book 6)", "author": "J.K. Rowling", "location": "Back 3", "genre": "Fantasy", "language": "English"}, {"title": "Harry Potter and the Deathly Hallows (Book 7)", "author": "J.K. Rowling", "location": "Back 3", "genre": "Fantasy", "language": "English"}, {"title": "Yosemite and the Range of Light", "author": "Ansel Adams", "location": "Back 4", "genre": "Photography/Art", "language": "English"}, {"title": "Rant: The Oral Biography of Buster Casey", "author": "Chuck Palahniuk", "location": "Back 4", "genre": "Fiction", "language": "English"}, {"title": "Ich lieb dich für immer", "author": "Munsch/Rieckhoff", "location": "Back 4", "genre": "Children's", "language": "German"}, {"title": "You Are to Me", "author": "Rebecca Doughty", "location": "Back 4", "genre": "Fiction/Gift Book", "language": "English"}, {"title": "Why I Love You", "author": "Lang", "location": "Back 4", "genre": "Children's/Gift Book", "language": "English"}, {"title": "The Sheltering Sky", "author": "Paul Bowles", "location": "Back 4", "genre": "Fiction", "language": "English"}, {"title": "Out of Africa and Shadows on the Grass", "author": "Isak Dinesen", "location": "Back 4", "genre": "Memoir", "language": "English"}, {"title": "Easy Riders, Raging Bulls", "author": "Peter Biskind", "location": "Back 4", "genre": "Film History", "language": "English"}, {"title": "A History of Our Time", "author": "Chafe & Sitkoff", "location": "Back 4", "genre": "History", "language": "English"}, {"title": "Washington's Spies", "author": "Alexander Rose", "location": "Back 4", "genre": "History", "language": "English"}, {"title": "Phaedra", "author": "Seneca", "location": "Back 5", "genre": "Drama/Classics", "language": "English"}, {"title": "Hanging Out with the Dream King", "author": "Schad", "location": "Back 5", "genre": "Comics/Interviews", "language": "English"}, {"title": "Afoot & Afield in Los Angeles County", "author": "Jersild/Johnson (ed.)", "location": "Back 5", "genre": "Hiking/Travel", "language": "English"}, {"title": "Moral Issues & Christian Response", "author": "", "location": "Back 5", "genre": "Religion", "language": "English"}, {"title": "The Red Tent", "author": "Anita Diamant", "location": "Back 5", "genre": "Fiction", "language": "English"}, {"title": "The Most Beautiful Girl in the World", "author": "Banet-Weiser", "location": "Back 5", "genre": "Media Studies", "language": "English"}, {"title": "The Mis-Education of the Negro", "author": "Woodson", "location": "Back 5", "genre": "History", "language": "English"}, {"title": "Soul Gardening", "author": "Hershey", "location": "Back 5", "genre": "Gardening/Spirituality", "language": "English"}, {"title": "Picasso at the Lapin Agile and Other Plays", "author": "Steve Martin", "location": "Back 5", "genre": "Drama", "language": "English"}, {"title": "Stan Mack's Real Life American Revolution", "author": "Stan Mack", "location": "Back 5", "genre": "Graphic Novel/History", "language": "English"}, {"title": "The 19th Wife", "author": "David Ebershoff", "location": "Back 5", "genre": "Fiction", "language": "English"}, {"title": "My Family and Other Animals", "author": "Gerald Durrell", "location": "Back 5", "genre": "Memoir", "language": "English"}, {"title": "The Good Terrorist", "author": "Doris Lessing", "location": "Back 5", "genre": "Fiction", "language": "English"}, {"title": "Death by Black Hole", "author": "Neil deGrasse Tyson", "location": "Back 5", "genre": "Science", "language": "English"}, {"title": "Puerto Vallarta 2008", "author": "Fodor's", "location": "Back 5", "genre": "Travel", "language": "English"}, {"title": "The Man in the High Castle", "author": "Philip K. Dick", "location": "Back 5", "genre": "Science Fiction", "language": "English"}, {"title": "Zorba the Greek", "author": "Nikos Kazantzakis", "location": "Back 5", "genre": "Fiction", "language": "English"}, {"title": "Born to Kvetch", "author": "Michael Wex", "location": "Back 5", "genre": "Language/Culture", "language": "English"}, {"title": "Day Hikes Around Los Angeles", "author": "Stone", "location": "Back 5", "genre": "Travel", "language": "English"}, {"title": "Creating Rituals", "author": "Clarke", "location": "Back 5", "genre": "Spirituality", "language": "English"}, {"title": "Saints for Young People, Vol. I & II", "author": "St. Paul Editions", "location": "Back 5", "genre": "Religion", "language": "English"}, {"title": "Die Dritte Hand: A Detective Story for German Language Learners", "author": "", "location": "Back 6 (loose)", "genre": "Language Learning", "language": "German"}, {"title": "Schweizer Spezialitäten", "author": "Betty Bossi", "location": "Back 6 (loose)", "genre": "Cookbook", "language": "German"}, {"title": "Television: The Critical View", "author": "Newcomb", "location": "Back 7", "genre": "Media Studies", "language": "English"}, {"title": "The Musical", "author": "Kislan", "location": "Back 7", "genre": "Theater", "language": "English"}, {"title": "A Girl Called Fearless", "author": "Catherine Linka", "location": "Back 7", "genre": "Fiction/YA", "language": "English"}, {"title": "Lost in the Tallgrass", "author": "Clyde Witt", "location": "Back 7", "genre": "Fiction", "language": "English"}, {"title": "Popular Film and Television Comedy", "author": "Neale & Krutnik", "location": "Back 7", "genre": "Film Studies", "language": "English"}, {"title": "Peterson Field Guide to Birds of Western North America", "author": "Roger Tory Peterson", "location": "Back 7", "genre": "Reference/Nature", "language": "English"}, {"title": "The Eclogues of Virgil", "author": "A.J. Boyle", "location": "Back 7", "genre": "Poetry/Classics", "language": "English"}, {"title": "Hollywood Genres", "author": "Schatz", "location": "Back 7", "genre": "Film Studies", "language": "English"}, {"title": "Maus", "author": "Art Spiegelman", "location": "Back 7", "genre": "Graphic Novel", "language": "English"}, {"title": "Stand Up, Shake Hands, Say \"How Do You Do\"", "author": "Henry Jay Forman", "location": "Back 7", "genre": "Nonfiction", "language": "English"}, {"title": "The Wrath of Grapes", "author": "Henry Jay Forman", "location": "Back 7", "genre": "Nonfiction", "language": "English"}, {"title": "Undaunted Courage", "author": "Stephen E. Ambrose", "location": "Back 7", "genre": "History", "language": "English"}, {"title": "Paris to the Past", "author": "Ina Caro", "location": "Back 7", "genre": "History/Travel", "language": "English"}, {"title": "A Yellow Raft in Blue Water", "author": "Michael Dorris", "location": "Back 7", "genre": "Fiction", "language": "English"}, {"title": "The Pot of Gold and Other Plays", "author": "Plautus", "location": "Back 7", "genre": "Drama/Classics", "language": "English"}, {"title": "100 Things to Do in Los Angeles Before You Die", "author": "Yerkovich", "location": "Back 7", "genre": "Travel", "language": "English"}, {"title": "How We Love", "author": "", "location": "Back 7", "genre": "Relationships", "language": "English"}, {"title": "Slapstick", "author": "Kurt Vonnegut", "location": "Back 8 (loose)", "genre": "Fiction", "language": "English"}, {"title": "English (USA) – Lithuanian for Beginners", "author": "50 Languages", "location": "Back 8 (loose)", "genre": "Language Learning", "language": "English/Lithuanian"}, {"title": "My Life Among Humans", "author": "Jed McGowan", "location": "Back 8 (loose)", "genre": "Graphic Novel/Humor", "language": "English"}, {"title": "Freital", "author": "", "location": "Back 9 (loose)", "genre": "Travel/Local History", "language": "German"}, {"title": "The Adventures of Tom Sawyer", "author": "Mark Twain", "location": "Back 9 (loose)", "genre": "Fiction/Classics", "language": "English"}, {"title": "Tuck Everlasting", "author": "Natalie Babbitt", "location": "Back 9 (loose)", "genre": "Children's/YA", "language": "English"}, {"title": "Making Comics", "author": "Scott McCloud", "location": "Back 10", "genre": "Comics/Art", "language": "English"}, {"title": "Watchmen", "author": "Alan Moore & Dave Gibbons", "location": "Back 10", "genre": "Graphic Novel", "language": "English"}, {"title": "Batman: The Dark Knight Returns", "author": "Miller, Janson, Varley", "location": "Back 10", "genre": "Graphic Novel", "language": "English"}, {"title": "Batman: Arkham Asylum", "author": "Morrison & McKean", "location": "Back 10", "genre": "Graphic Novel", "language": "English"}, {"title": "Sandman: The Dream Hunters", "author": "Neil Gaiman & Yoshitaka Amano", "location": "Back 10", "genre": "Graphic Novel", "language": "English"}, {"title": "Blankets", "author": "Craig Thompson", "location": "Back 10", "genre": "Graphic Novel/Memoir", "language": "English"}, {"title": "Your House Will Pay", "author": "Steph Cha", "location": "Back 10", "genre": "Fiction", "language": "English"}, {"title": "Gems of the Green Vault in Dresden", "author": "Dirk Syndram", "location": "Back 10", "genre": "Art/History", "language": "English"}, {"title": "The Hand of Black", "author": "", "location": "Back 10", "genre": "Fiction/Graphic Novel", "language": "English"}, {"title": "The Movie Business Book", "author": "Jason E. Squire", "location": "Back 10", "genre": "Film/Business", "language": "English"}, {"title": "Contemporary Jewish Ethics and Morality", "author": "Dorff & Newman", "location": "Back 10", "genre": "Religion", "language": "English"}, {"title": "The Law of Public Communication", "author": "Middleton, Trager, Chamberlin", "location": "Back 10", "genre": "Communication/Law", "language": "English"}, {"title": "National Geographic, Oct. 1975 & June 1980 issues", "author": "", "location": "Back 10", "genre": "Periodical", "language": "English"}, {"title": "Beginner's Lithuanian", "author": "", "location": "Back 10", "genre": "Language Learning", "language": "English/Lithuanian"}, {"title": "Between Shades of Gray", "author": "Ruta Sepetys", "location": "Back 10", "genre": "Fiction/YA", "language": "English"}, {"title": "Black Feminist Thought", "author": "Patricia Hill Collins", "location": "Back 10", "genre": "Sociology", "language": "English"}, {"title": "Put the Book Back on the Shelf: A Belle and Sebastian Anthology", "author": "", "location": "Back 10", "genre": "Music", "language": "English"}, {"title": "Wer glaubt denn schon an Drachen?", "author": "", "location": "Back 10", "genre": "Children's/Fiction", "language": "German"}, {"title": "Successful User Experience: Strategies and Roadmaps", "author": "Rosenzweig", "location": "Office 1", "genre": "UX/Design", "language": "English"}, {"title": "Handbook of Usability Testing (2nd ed.)", "author": "Rubin & Chisnell", "location": "Office 1", "genre": "UX/Design", "language": "English"}, {"title": "Sensemaking", "author": "Christian Madsbjerg", "location": "Office 1", "genre": "Business", "language": "English"}, {"title": "Build Better Products", "author": "Laura Klein", "location": "Office 1", "genre": "UX/Design", "language": "English"}, {"title": "Organizational Ethnography", "author": "ed. Ybema, Yanow, Wels & Kamsteeg", "location": "Office 1", "genre": "Research Methods", "language": "English"}, {"title": "Ethnography Essentials", "author": "Murchison", "location": "Office 1", "genre": "Research Methods", "language": "English"}, {"title": "Present Yourself", "author": "Danielle Barnes & Christina Wodtke", "location": "Office 1", "genre": "UX/Design", "language": "English"}, {"title": "Disability Visibility", "author": "ed. Alice Wong", "location": "Office 1", "genre": "Memoir/Essays", "language": "English"}, {"title": "Rethinking Users", "author": "Youngblood, Chesluk, Haidary", "location": "Office 1", "genre": "UX/Design", "language": "English"}, {"title": "Good Services", "author": "Lou Downe", "location": "Office 1", "genre": "UX/Design", "language": "English"}, {"title": "Research That Scales", "author": "Kate Towsey", "location": "Office 1", "genre": "UX Research", "language": "English"}, {"title": "Culture and Psychology (6th ed.)", "author": "Matsumoto & Juang", "location": "Office 1", "genre": "Psychology", "language": "English"}, {"title": "Engineering Psychology and Human Performance (4th ed.)", "author": "Wickens, Hollands, Banbury, Parasuraman", "location": "Office 1", "genre": "Psychology", "language": "English"}, {"title": "Information Visualization (3rd ed.)", "author": "Colin Ware", "location": "Office 1", "genre": "Design/Data", "language": "English"}, {"title": "What Got You Here Won't Get You There", "author": "Marshall Goldsmith", "location": "Office 1", "genre": "Business", "language": "English"}, {"title": "Don't Make Me Think!", "author": "Steve Krug", "location": "Office 1", "genre": "UX/Design", "language": "English"}, {"title": "Rocket Surgery Made Easy", "author": "Steve Krug", "location": "Office 1", "genre": "UX/Design", "language": "English"}, {"title": "Conversational Design", "author": "Erika Hall", "location": "Office 1", "genre": "UX/Design", "language": "English"}, {"title": "Accessibility for Everyone", "author": "Laura Kalbag", "location": "Office 1", "genre": "UX/Design", "language": "English"}, {"title": "Strategic Writing for UX", "author": "Torrey Podmajersky", "location": "Office 1", "genre": "UX/Design", "language": "English"}, {"title": "Figure It Out: How to Make Sense of Any Mess", "author": "Stephen P. Anderson & Karl Fast", "location": "Office 2", "genre": "UX/Design", "language": "English"}, {"title": "Surveys That Work", "author": "Caroline Jarrett", "location": "Office 2", "genre": "UX Research", "language": "English"}, {"title": "Writing Is Designing", "author": "Michael J. Metts & Andy Welfle", "location": "Office 2", "genre": "UX/Design", "language": "English"}, {"title": "The User's Journey", "author": "Donna Lichaw", "location": "Office 2", "genre": "UX/Design", "language": "English"}, {"title": "Living in Information", "author": "Jorge Arango", "location": "Office 2", "genre": "UX/Design", "language": "English"}, {"title": "Orchestrating Experiences", "author": "Chris Risdon & Patrick Quattlebaum", "location": "Office 2", "genre": "UX/Design", "language": "English"}, {"title": "Herding Tigers", "author": "Todd Henry", "location": "Office 2", "genre": "Business/Management", "language": "English"}, {"title": "How to Cry at Work", "author": "Justin Kerr", "location": "Office 2", "genre": "Business/Self-Help", "language": "English"}, {"title": "Conversations with Things", "author": "Diana Deibel & Rebecca Evanhoe", "location": "Office 2", "genre": "UX/Design", "language": "English"}, {"title": "Thoughtful Interaction Design", "author": "Löwgren & Stolterman", "location": "Office 2", "genre": "Design", "language": "English"}, {"title": "The Sketchnote Handbook", "author": "Mike Rohde", "location": "Office 2", "genre": "Design/Reference", "language": "English"}, {"title": "Atomic Design", "author": "Brad Frost", "location": "Office 2", "genre": "Design/Web", "language": "English"}, {"title": "Dausos: Pantheon of Baltic Gods", "author": "Tautvydas Kaltenis", "location": "Office 3", "genre": "Mythology", "language": "English"}, {"title": "Lithuanian: Real-Life Conversations for Beginners", "author": "Lingvora Books", "location": "Office 3", "genre": "Language Learning", "language": "Lithuanian/English"}, {"title": "Colloquial Lithuanian: The Complete Course for Beginners", "author": "", "location": "Office 3", "genre": "Language Learning", "language": "Lithuanian/English"}, {"title": "Smuggler's Cove", "author": "Cate", "location": "Office 3", "genre": "Cocktails/Reference", "language": "English"}, {"title": "750 German Verbs and Their Uses", "author": "Zamir Neumeier", "location": "Office 3", "genre": "Language Learning", "language": "German/English"}, {"title": "Das Haupt der Welt", "author": "Rebecca Gablé", "location": "Office 3", "genre": "Fiction", "language": "German"}, {"title": "Bruch: Ein dunkler Ort", "author": "Frank Goldammer", "location": "Office 3", "genre": "Fiction/Crime", "language": "German"}, {"title": "Tod auf der Elbe", "author": "Frank Goldammer", "location": "Office 3", "genre": "Fiction/Crime", "language": "German"}, {"title": "Sächsisch: von Modschegiebschen und Diggnischln", "author": "", "location": "Office 3", "genre": "Nonfiction/Dialect", "language": "German"}, {"title": "Kindergeschichten", "author": "Peter Bichsel", "location": "Office 3", "genre": "Fiction/Children's", "language": "German"}, {"title": "Lithuanians of Schuylkill County", "author": "Anne Chalkowsky La Voie", "location": "Office 3", "genre": "History", "language": "English"}, {"title": "Lithuanian Chicago", "author": "Justin G. Riskus", "location": "Office 3", "genre": "History", "language": "English"}, {"title": "The Four Noble Truths", "author": "Ven. Lobsang Gyatso", "location": "Office 3", "genre": "Religion/Buddhism", "language": "English"}, {"title": "Blood and Oranges", "author": "James Oliver Goldsborough", "location": "Office 3", "genre": "Fiction", "language": "English"}, {"title": "Dune", "author": "Frank Herbert", "location": "Office 3", "genre": "Science Fiction", "language": "English"}, {"title": "?11 (uncertain title/author - comic spine)", "author": "", "location": "Office 4", "genre": "Graphic Novel", "language": "German"}, {"title": "Mutanten Welt", "author": "Richard Corben", "location": "Office 4", "genre": "Graphic Novel", "language": "German"}, {"title": "Gods' Man: A Novel in Woodcuts", "author": "Lynd Ward", "location": "Office 4", "genre": "Graphic Novel/Classics", "language": "English"}, {"title": "The Drawing Club: Master the Art of Drawing Characters from Life", "author": "Bob Kato", "location": "Office 4", "genre": "Art Instruction", "language": "English"}, {"title": "?12 (Observable Universe - author/title pairing uncertain)", "author": "Jed McGowan", "location": "Office 4", "genre": "Graphic Novel", "language": "English"}, {"title": "Avanti! Beginning Italian", "author": "Aski & Musumeci", "location": "Office 4", "genre": "Language Learning", "language": "Italian/English"}, {"title": "?13 (Bild Comic-Bibliothek 5 #34 - title uncertain)", "author": "", "location": "Office 4", "genre": "Comic", "language": "German"}, {"title": "Spirou + Fantasio", "author": "", "location": "Office 4", "genre": "Graphic Novel", "language": "German"}, {"title": "Tor!: The Story of German Football", "author": "Uli Hesse", "location": "Office 5", "genre": "Sports/History", "language": "English"}, {"title": "The Color of Law", "author": "Richard Rothstein", "location": "Office 5", "genre": "History/Politics", "language": "English"}, {"title": "Lustiges Taschenbuch: Abenteuer #3", "author": "Walt Disney", "location": "Office 5", "genre": "Comic", "language": "German"}, {"title": "Attention All Shipping: A Journey Round the Shipping Forecast", "author": "Charlie Connelly", "location": "Office 5", "genre": "Travel/Memoir", "language": "English"}, {"title": "German for Artists", "author": "Stine Marie Jacobsen", "location": "Office 5", "genre": "Language Learning/Art", "language": "German/English"}, {"title": "Heinz Erhardt für den Advent", "author": "", "location": "Office 5", "genre": "Humor/Poetry", "language": "German"}, {"title": "Sprich Doch Deutsch! 333 Mini-Dialoge", "author": "", "location": "Office 6", "genre": "Language Learning", "language": "German"}, {"title": "Neuromancer", "author": "William Gibson", "location": "Office 6", "genre": "Science Fiction", "language": "English"}, {"title": "Confidential", "author": "John Nolan", "location": "Office 6", "genre": "Business", "language": "English"}, {"title": "Inviting Depth", "author": "Brandon Berry & Tom Williams", "location": "Office 6", "genre": "Business/Design", "language": "English"}, {"title": "German Short Stories for Upper-Intermediate Learners", "author": "", "location": "Office 6", "genre": "Language Learning", "language": "German"}, {"title": "The Library", "author": "Valerian Pidmohylnyi", "location": "Office 6", "genre": "Fiction", "language": "English"}, {"title": "Visitation", "author": "Jenny Erpenbeck", "location": "Office 6", "genre": "Fiction", "language": "English"}, {"title": "Short Stories in Spanish", "author": "Olly Richards", "location": "Office 6", "genre": "Language Learning", "language": "Spanish"}, {"title": "Teach Yourself German for Beginners", "author": "", "location": "Office 6", "genre": "Language Learning", "language": "German/English"}, {"title": "Entenhausen Taschenbuch: Franz Gans Stars #18", "author": "", "location": "Office 6", "genre": "Comic", "language": "German"}, {"title": "Kopflos in Dresden", "author": "Victoria Krebs", "location": "Office 6", "genre": "Fiction/Crime", "language": "German"}, {"title": "Der Angstmann", "author": "Frank Goldammer", "location": "Office 6", "genre": "Fiction/Crime", "language": "German"}, {"title": "Tausend Teufel", "author": "Frank Goldammer", "location": "Office 6", "genre": "Fiction/Crime", "language": "German"}, {"title": "Der Schoppenfetzer und die Silvanerleiche", "author": "Günter Huth", "location": "Office 6", "genre": "Fiction/Crime", "language": "German"}, {"title": "Mordskunst im Elbtal", "author": "Thea Lehmann", "location": "Office 6", "genre": "Fiction/Crime", "language": "German"}, {"title": "Dunkeltage im Elbsandstein", "author": "Thea Lehmann", "location": "Office 6", "genre": "Fiction/Crime", "language": "German"}, {"title": "Tod im Kirnitzschtal", "author": "Thea Lehmann", "location": "Office 6", "genre": "Fiction/Crime", "language": "German"}]
+</script>
+<script id="movie-data" type="application/json">
+[{"title": "The Hitchhiker's Guide to the Galaxy", "location": "Front Room", "format": "Blu-ray", "genre": "Comedy/Sci-Fi", "notes": ""}, {"title": "Drive", "location": "Front Room", "format": "Blu-ray", "genre": "Crime/Thriller", "notes": ""}, {"title": "Nightcrawler", "location": "Front Room", "format": "Blu-ray", "genre": "Thriller/Crime", "notes": ""}, {"title": "The Godfather: The Coppola Restoration", "location": "Front Room", "format": "Blu-ray", "genre": "Crime/Drama", "notes": ""}, {"title": "Back to the Future: 25th Anniversary Trilogy", "location": "Front Room", "format": "Blu-ray", "genre": "Sci-Fi/Comedy", "notes": "3-film set"}, {"title": "Das Boot: The Director's Cut", "location": "Front Room", "format": "DVD", "genre": "War/Drama", "notes": ""}, {"title": "Extremely Loud & Incredibly Close", "location": "Front Room", "format": "DVD", "genre": "Drama", "notes": ""}, {"title": "Best in Show", "location": "Front Room", "format": "DVD", "genre": "Comedy/Mockumentary", "notes": ""}, {"title": "Peter Pan: Diamond Edition", "location": "Front Room", "format": "DVD", "genre": "Animation/Family", "notes": ""}, {"title": "Moonrise Kingdom", "location": "Front Room", "format": "Blu-ray", "genre": "Comedy/Drama", "notes": ""}, {"title": "Alice in Wonderland: The Masterpiece Edition", "location": "Front Room", "format": "DVD", "genre": "Animation/Family", "notes": ""}, {"title": "Robin Hood: Most Wanted Edition", "location": "Front Room", "format": "DVD", "genre": "Animation/Family", "notes": ""}, {"title": "Planes Trains and Automobiles", "location": "Front Room", "format": "DVD", "genre": "Comedy", "notes": ""}, {"title": "Bedknobs and Broomsticks", "location": "Front Room", "format": "DVD", "genre": "Family/Fantasy", "notes": ""}, {"title": "Intouchables", "location": "Front Room", "format": "DVD", "genre": "Comedy/Drama", "notes": ""}, {"title": "The Good Dinosaur", "location": "Front Room", "format": "Blu-ray", "genre": "Animation/Family", "notes": ""}, {"title": "WALL-E", "location": "Front Room", "format": "Blu-ray", "genre": "Animation/Sci-Fi", "notes": ""}, {"title": "Coraline: 2-Disc Collector's Edition", "location": "Front Room", "format": "Blu-ray", "genre": "Animation/Fantasy", "notes": ""}, {"title": "Newsies: 20th Anniversary Edition", "location": "Front Room", "format": "Blu-ray", "genre": "Musical", "notes": ""}, {"title": "The Boxtrolls", "location": "Front Room", "format": "Blu-ray", "genre": "Animation/Family", "notes": ""}, {"title": "The Goonies", "location": "Front Room", "format": "Blu-ray", "genre": "Adventure/Family", "notes": ""}, {"title": "Donnie Darko", "location": "Front Room", "format": "Blu-ray", "genre": "Sci-Fi/Drama", "notes": ""}, {"title": "Pocahontas", "location": "Front Room", "format": "DVD", "genre": "Animation/Family", "notes": ""}, {"title": "The Lives of Others", "location": "Front Room", "format": "Blu-ray", "genre": "Drama/Thriller", "notes": ""}, {"title": "Big Hero 6", "location": "Front Room", "format": "Blu-ray", "genre": "Animation/Family", "notes": ""}, {"title": "The Jerk: 25th Anniversary Edition", "location": "Front Room", "format": "DVD", "genre": "Comedy", "notes": ""}, {"title": "The Clint Eastwood Collection", "location": "Front Room", "format": "DVD", "genre": "Western/Action", "notes": "Multi-film set"}, {"title": "The Austin-Healey", "location": "Front Room", "format": "DVD", "genre": "Documentary", "notes": "History Channel"}, {"title": "Labyrinth", "location": "Front Room", "format": "DVD", "genre": "Fantasy/Musical", "notes": ""}, {"title": "Big Fish", "location": "Front Room", "format": "DVD", "genre": "Fantasy/Drama", "notes": ""}, {"title": "Memento", "location": "Front Room", "format": "DVD", "genre": "Thriller/Mystery", "notes": ""}, {"title": "The Star of Bethlehem", "location": "Front Room", "format": "DVD", "genre": "Documentary", "notes": "Rick Larson"}, {"title": "A Scanner Darkly", "location": "Front Room", "format": "DVD", "genre": "Sci-Fi/Animation", "notes": ""}, {"title": "Girls Just Want to Have Fun", "location": "Front Room", "format": "DVD", "genre": "Comedy", "notes": ""}, {"title": "The Sword in the Stone: 45th Anniversary Edition", "location": "Front Room", "format": "DVD", "genre": "Animation/Family", "notes": ""}, {"title": "Rancho La Cañada", "location": "Front Room", "format": "DVD", "genre": "Documentary", "notes": "Local history; genre uncertain"}, {"title": "Citizen Kane", "location": "Front Room", "format": "DVD", "genre": "Drama", "notes": ""}, {"title": "Population 436", "location": "Front Room", "format": "DVD", "genre": "Thriller/Horror", "notes": ""}, {"title": "Flash Gordon: Saviour of the Universe Edition", "location": "Front Room", "format": "DVD", "genre": "Sci-Fi/Adventure", "notes": ""}, {"title": "Oliver & Company: 20th Anniversary Edition", "location": "Front Room", "format": "DVD", "genre": "Animation/Family", "notes": ""}, {"title": "Spirited Away", "location": "Front Room", "format": "DVD", "genre": "Animation/Fantasy", "notes": "Miyazaki"}, {"title": "Nutcracker The Motion Picture", "location": "Front Room", "format": "DVD", "genre": "Ballet/Family", "notes": "Baryshnikov"}, {"title": "The Muppet Christmas Carol", "location": "Front Room", "format": "DVD", "genre": "Family/Musical", "notes": ""}, {"title": "The Nutcracker", "location": "Front Room", "format": "DVD", "genre": "Ballet/Family", "notes": "Possible duplicate of Nutcracker The Motion Picture"}, {"title": "Troop Beverly Hills", "location": "Front Room", "format": "DVD", "genre": "Comedy", "notes": ""}, {"title": "Amélie", "location": "Front Room", "format": "DVD", "genre": "Romance/Comedy", "notes": ""}, {"title": "Star Wars Trilogy (Original)", "location": "Front Room", "format": "DVD", "genre": "Sci-Fi/Adventure", "notes": "4-disc set with bonus material"}, {"title": "Mary Poppins: 40th Anniversary Edition", "location": "Front Room", "format": "DVD", "genre": "Family/Musical", "notes": ""}, {"title": "Willy Wonka & the Chocolate Factory", "location": "Front Room", "format": "DVD", "genre": "Family/Fantasy", "notes": ""}, {"title": "Alfred Hitchcock: The Essentials Collection", "location": "Front Room", "format": "Blu-ray", "genre": "Thriller", "notes": "Multi-film set"}, {"title": "Love Actually", "location": "Front Room", "format": "DVD", "genre": "Romance/Comedy", "notes": ""}, {"title": "Hot Fuzz", "location": "Front Room", "format": "DVD", "genre": "Comedy/Action", "notes": ""}, {"title": "Lost in Translation", "location": "Front Room", "format": "DVD", "genre": "Drama/Comedy", "notes": ""}, {"title": "Love Jones", "location": "Front Room", "format": "DVD", "genre": "Romance/Drama", "notes": ""}, {"title": "Herbie: 4-Movie Collection", "location": "Front Room", "format": "DVD", "genre": "Family/Comedy", "notes": ""}, {"title": "20000 Leagues Under the Sea: Special Edition", "location": "Front Room", "format": "DVD", "genre": "Adventure/Sci-Fi", "notes": ""}, {"title": "The Trails of La Cañada Flintridge", "location": "Front Room", "format": "DVD", "genre": "Documentary", "notes": "Local history"}, {"title": "Cinderella: Special Edition", "location": "Front Room", "format": "DVD", "genre": "Animation/Family", "notes": ""}, {"title": "Good Bye Lenin!", "location": "Front Room", "format": "DVD", "genre": "Comedy/Drama", "notes": ""}, {"title": "The Adventures of Baron Munchausen: 20th Anniversary Edition", "location": "Front Room", "format": "DVD", "genre": "Fantasy/Adventure", "notes": ""}, {"title": "The Rocketeer: Special Edition", "location": "Front Room", "format": "DVD", "genre": "Adventure", "notes": ""}, {"title": "Office Space: Special Edition", "location": "Front Room", "format": "DVD", "genre": "Comedy", "notes": ""}, {"title": "Pride and Prejudice", "location": "Front Room", "format": "DVD", "genre": "Drama/Romance", "notes": "A&E miniseries"}, {"title": "The Adventures of Brisco County Jr.: The Complete Series", "location": "Front Room", "format": "DVD", "genre": "Western/Adventure", "notes": "TV series"}, {"title": "The Adventures of Indiana Jones: Complete DVD Movie Collection", "location": "Front Room", "format": "DVD", "genre": "Adventure", "notes": "4-film set"}, {"title": "Father Ted: The Definitive Collection", "location": "Front Room", "format": "DVD", "genre": "Comedy", "notes": "TV series"}, {"title": "My So-Called Life: The Complete Series", "location": "Front Room", "format": "DVD", "genre": "Drama", "notes": "TV series"}, {"title": "Dawson's Creek: The Complete Series", "location": "Front Room", "format": "DVD", "genre": "Drama", "notes": "TV series"}, {"title": "Monty Python's Holy Trinity", "location": "Front Room", "format": "DVD", "genre": "Comedy", "notes": "3-film set"}, {"title": "Arrested Development: Season One", "location": "Front Room", "format": "DVD", "genre": "Comedy", "notes": "TV series"}, {"title": "Arrested Development: Season Two", "location": "Front Room", "format": "DVD", "genre": "Comedy", "notes": "TV series"}, {"title": "Arrested Development: Season Three", "location": "Front Room", "format": "DVD", "genre": "Comedy", "notes": "TV series"}, {"title": "His Girl Friday", "location": "Living Room", "format": "DVD", "genre": "Comedy/Romance", "notes": ""}, {"title": "Brown Sugar", "location": "Living Room", "format": "DVD", "genre": "Romance/Drama", "notes": ""}, {"title": "Leaving Las Vegas", "location": "Living Room", "format": "DVD", "genre": "Drama", "notes": "Title partly obscured in photo"}, {"title": "Forgetting Sarah Marshall: Unrated Collector's Edition", "location": "Living Room", "format": "DVD", "genre": "Comedy/Romance", "notes": ""}, {"title": "Waiting for Guffman", "location": "Living Room", "format": "DVD", "genre": "Comedy/Mockumentary", "notes": ""}, {"title": "Intolerable Cruelty", "location": "Living Room", "format": "DVD", "genre": "Comedy/Romance", "notes": ""}, {"title": "My Fair Lady", "location": "Living Room", "format": "DVD", "genre": "Musical/Romance", "notes": ""}, {"title": "Rushmore", "location": "Living Room", "format": "DVD", "genre": "Comedy/Drama", "notes": "Criterion Collection"}, {"title": "Old School: Unrated", "location": "Living Room", "format": "DVD", "genre": "Comedy", "notes": ""}, {"title": "The Best Man", "location": "Living Room", "format": "DVD", "genre": "Comedy/Drama", "notes": ""}, {"title": "So I Married an Axe Murderer", "location": "Living Room", "format": "DVD", "genre": "Comedy", "notes": ""}, {"title": "Shaun of the Dead", "location": "Living Room", "format": "DVD", "genre": "Comedy/Horror", "notes": ""}, {"title": "O Brother Where Art Thou?", "location": "Living Room", "format": "DVD", "genre": "Comedy/Adventure", "notes": ""}, {"title": "Shall We Dance?", "location": "Living Room", "format": "DVD", "genre": "Romance/Drama", "notes": ""}, {"title": "Little Miss Sunshine", "location": "Living Room", "format": "DVD", "genre": "Comedy/Drama", "notes": ""}, {"title": "The NeverEnding Story II: The Next Chapter", "location": "Living Room", "format": "DVD", "genre": "Fantasy/Family", "notes": ""}, {"title": "Greatest Classic Films: Broadway Musicals", "location": "Living Room", "format": "DVD", "genre": "Musical", "notes": "TCM collection"}, {"title": "The Princess Bride: 20th Anniversary Collector's Edition", "location": "Living Room", "format": "DVD", "genre": "Fantasy/Adventure", "notes": ""}, {"title": "Mad Hot Ballroom", "location": "Living Room", "format": "DVD", "genre": "Documentary", "notes": ""}, {"title": "Stranger than Fiction", "location": "Living Room", "format": "DVD", "genre": "Comedy/Drama", "notes": ""}, {"title": "Garden State", "location": "Living Room", "format": "DVD", "genre": "Drama/Comedy", "notes": ""}, {"title": "Election", "location": "Living Room", "format": "DVD", "genre": "Comedy/Drama", "notes": ""}, {"title": "Groundhog Day: 15th Anniversary Special Edition", "location": "Living Room", "format": "DVD", "genre": "Comedy/Fantasy", "notes": ""}, {"title": "The Aristocats: Special Edition", "location": "Living Room", "format": "DVD", "genre": "Animation/Family", "notes": ""}, {"title": "Somewhere in Time: Collector's Edition", "location": "Living Room", "format": "DVD", "genre": "Romance/Fantasy", "notes": ""}, {"title": "Shopgirl", "location": "Living Room", "format": "DVD", "genre": "Romance/Drama", "notes": ""}, {"title": "Wedding Crashers", "location": "Living Room", "format": "DVD", "genre": "Comedy", "notes": ""}, {"title": "Real Women Have Curves", "location": "Living Room", "format": "DVD", "genre": "Drama/Comedy", "notes": ""}, {"title": "Clueless", "location": "Living Room", "format": "DVD", "genre": "Comedy/Romance", "notes": ""}, {"title": "When Harry Met Sally: Special Edition", "location": "Living Room", "format": "DVD", "genre": "Romance/Comedy", "notes": ""}, {"title": "Spellbound", "location": "Living Room", "format": "DVD", "genre": "Documentary", "notes": ""}, {"title": "Say Anything", "location": "Living Room", "format": "DVD", "genre": "Romance/Drama", "notes": ""}, {"title": "Edward Scissorhands", "location": "Living Room", "format": "DVD", "genre": "Fantasy/Drama", "notes": ""}, {"title": "10 Things I Hate About You", "location": "Living Room", "format": "DVD", "genre": "Comedy/Romance", "notes": ""}, {"title": "The Darjeeling Limited", "location": "Living Room", "format": "DVD", "genre": "Comedy/Drama", "notes": ""}, {"title": "L.A. Confidential: Special Edition", "location": "Living Room", "format": "DVD", "genre": "Crime/Thriller", "notes": ""}, {"title": "USC Class of 2001", "location": "Living Room", "format": "DVD", "genre": "Documentary", "notes": ""}, {"title": "I Love You Man", "location": "Living Room", "format": "DVD", "genre": "Comedy", "notes": ""}, {"title": "Love & Basketball: Platinum Series", "location": "Living Room", "format": "DVD", "genre": "Romance/Drama", "notes": ""}, {"title": "The Muppets Take Manhattan", "location": "Living Room", "format": "DVD", "genre": "Family/Musical", "notes": ""}, {"title": "The Jungle Book: 40th Anniversary Edition", "location": "Living Room", "format": "DVD", "genre": "Animation/Family", "notes": ""}, {"title": "Napoleon Dynamite", "location": "Living Room", "format": "DVD", "genre": "Comedy", "notes": ""}, {"title": "The Black Cauldron", "location": "Living Room", "format": "DVD", "genre": "Animation/Fantasy", "notes": ""}, {"title": "Emmet Otter's Jug-Band Christmas", "location": "Living Room", "format": "DVD", "genre": "Family/Musical", "notes": ""}, {"title": "The Nightmare Before Christmas: Collector's Edition", "location": "Living Room", "format": "DVD", "genre": "Animation/Fantasy", "notes": ""}, {"title": "The Tick", "location": "Living Room", "format": "DVD", "genre": "Comedy/Action", "notes": "TV series"}, {"title": "Beetlejuice", "location": "Living Room", "format": "DVD", "genre": "Comedy/Fantasy", "notes": ""}, {"title": "Sideways", "location": "Living Room", "format": "DVD", "genre": "Comedy/Drama", "notes": ""}, {"title": "Sunset Boulevard: Special Collector's Edition", "location": "Living Room", "format": "DVD", "genre": "Drama", "notes": "Film noir"}, {"title": "Bill & Ted's Excellent Adventure / Bogus Journey", "location": "Living Room", "format": "DVD", "genre": "Comedy/Sci-Fi", "notes": "Double feature 2-disc set"}, {"title": "Romeo + Juliet: Special Edition", "location": "Living Room", "format": "DVD", "genre": "Romance/Drama", "notes": ""}, {"title": "Drop Dead Gorgeous", "location": "Living Room", "format": "DVD", "genre": "Comedy", "notes": ""}, {"title": "Role Models: Unrated", "location": "Living Room", "format": "DVD", "genre": "Comedy", "notes": ""}, {"title": "Howl's Moving Castle", "location": "Living Room", "format": "DVD", "genre": "Animation/Fantasy", "notes": "Miyazaki"}, {"title": "The Muppet Show: Season One Special Edition", "location": "Living Room", "format": "DVD", "genre": "Family/Comedy", "notes": "TV series"}, {"title": "Benjamin Franklin", "location": "Living Room", "format": "DVD", "genre": "Documentary", "notes": "PBS"}, {"title": "Ben Franklin Tech", "location": "Living Room", "format": "DVD", "genre": "Documentary", "notes": "History Channel"}, {"title": "(500) Days of Summer", "location": "Living Room", "format": "DVD", "genre": "Romance/Comedy", "notes": ""}, {"title": "The Night of the Iguana", "location": "Living Room", "format": "DVD", "genre": "Drama", "notes": ""}, {"title": "The Life Aquatic with Steve Zissou", "location": "Living Room", "format": "DVD", "genre": "Comedy/Adventure", "notes": "Criterion Collection"}, {"title": "The Royal Tenenbaums", "location": "Living Room", "format": "DVD", "genre": "Comedy/Drama", "notes": "Criterion Collection"}, {"title": "The Triplets of Belleville", "location": "Living Room", "format": "DVD", "genre": "Animation", "notes": ""}, {"title": "Joe Versus the Volcano", "location": "Living Room", "format": "DVD", "genre": "Comedy/Romance", "notes": ""}, {"title": "The Big Lebowski", "location": "Living Room", "format": "Blu-ray", "genre": "Comedy/Crime", "notes": ""}, {"title": "Princess Mononoke", "location": "Living Room", "format": "DVD", "genre": "Animation/Fantasy", "notes": "Miyazaki"}, {"title": "The Incredible Mr. Limpet", "location": "Living Room", "format": "DVD", "genre": "Animation/Family", "notes": ""}, {"title": "Clerks: Uncensored", "location": "Living Room", "format": "DVD", "genre": "Comedy", "notes": "2-disc set"}, {"title": "The Hudsucker Proxy", "location": "Living Room", "format": "DVD", "genre": "Comedy", "notes": ""}, {"title": "Head", "location": "Living Room", "format": "DVD", "genre": "Comedy/Musical", "notes": "The Monkees"}, {"title": "Superman", "location": "Living Room", "format": "DVD", "genre": "Action/Sci-Fi", "notes": ""}, {"title": "Essential Classics: Musicals", "location": "Living Room", "format": "DVD", "genre": "Musical", "notes": "Warner collection"}, {"title": "Home Alone", "location": "Living Room", "format": "DVD", "genre": "Comedy/Family", "notes": ""}, {"title": "Rebels & Redcoats", "location": "Living Room", "format": "DVD", "genre": "Documentary", "notes": "PBS"}, {"title": "Sex and the City: The Complete Series", "location": "Living Room", "format": "DVD", "genre": "Comedy/Drama", "notes": "TV series box set"}, {"title": "Tron: Legacy / Tron: The Original Classic", "location": "Living Room", "format": "Blu-ray", "genre": "Sci-Fi/Action", "notes": "3D combo pack"}, {"title": "Lady and the Tramp: Diamond Edition", "location": "Living Room", "format": "Blu-ray", "genre": "Animation/Family", "notes": ""}, {"title": "South Pacific", "location": "Living Room", "format": "Blu-ray", "genre": "Musical/Romance", "notes": ""}, {"title": "The Graduate", "location": "Living Room", "format": "Blu-ray", "genre": "Comedy/Drama", "notes": ""}, {"title": "Bottle Rocket", "location": "Living Room", "format": "Blu-ray", "genre": "Comedy/Crime", "notes": "Criterion Collection"}, {"title": "Scott Pilgrim vs. the World", "location": "Living Room", "format": "Blu-ray", "genre": "Comedy/Action", "notes": ""}, {"title": "My Neighbor Totoro", "location": "Living Room", "format": "Blu-ray", "genre": "Animation/Fantasy", "notes": "Miyazaki"}, {"title": "Battlestar Galactica: Blood & Chrome", "location": "Living Room", "format": "Blu-ray", "genre": "Sci-Fi", "notes": "Blu-ray + DVD combo"}, {"title": "Ratatouille", "location": "Living Room", "format": "Blu-ray", "genre": "Animation/Family", "notes": ""}, {"title": "Inside Out", "location": "Living Room", "format": "Blu-ray", "genre": "Animation/Family", "notes": ""}, {"title": "Pinocchio: 70th Anniversary Edition", "location": "Living Room", "format": "Blu-ray", "genre": "Animation/Family", "notes": ""}, {"title": "Sleeping Beauty: 50th Anniversary Edition", "location": "Living Room", "format": "Blu-ray", "genre": "Animation/Family", "notes": ""}, {"title": "Up", "location": "Living Room", "format": "Blu-ray", "genre": "Animation/Family", "notes": ""}, {"title": "Bridesmaids", "location": "Living Room", "format": "Blu-ray", "genre": "Comedy", "notes": "Blu-ray + DVD combo"}, {"title": "The 40-Year-Old Virgin: Unrated", "location": "Living Room", "format": "Blu-ray", "genre": "Comedy/Romance", "notes": ""}, {"title": "Aladdin: Diamond Edition", "location": "Living Room", "format": "Blu-ray", "genre": "Animation/Family", "notes": ""}, {"title": "Midnight in Paris", "location": "Living Room", "format": "Blu-ray", "genre": "Comedy/Fantasy", "notes": ""}, {"title": "Snow White and the Seven Dwarfs", "location": "Living Room", "format": "Blu-ray", "genre": "Animation/Family", "notes": ""}, {"title": "Anchorman: The Legend of Ron Burgundy", "location": "Living Room", "format": "Blu-ray", "genre": "Comedy", "notes": "Unrated Rich Mahogany Edition"}, {"title": "The Great Mouse Detective", "location": "Living Room", "format": "Blu-ray", "genre": "Animation/Family", "notes": ""}, {"title": "Step Brothers: Unrated", "location": "Living Room", "format": "Blu-ray", "genre": "Comedy", "notes": "2-disc set"}, {"title": "Monsters Inc.", "location": "Living Room", "format": "Blu-ray", "genre": "Animation/Family", "notes": ""}, {"title": "The Muppets", "location": "Living Room", "format": "Blu-ray", "genre": "Family/Musical", "notes": ""}]
+</script>
+<script>
+(function(){
+  "use strict";
+
+  /* ================= Shared utilities ================= */
+  function makeChip(label, isActive, onClick, extraClass){
+    const chip = document.createElement('button');
+    chip.className = 'chip' + (extraClass ? ' ' + extraClass : '') + (isActive ? ' active' : '');
+    chip.textContent = label;
+    chip.type = 'button';
+    chip.addEventListener('click', onClick);
+    return chip;
+  }
+
+  function summarizeSelection(set, allItems){
+    if (set.size === 0) return "All";
+    if (set.size === 1) return [...set][0];
+    if (set.size === allItems.length) return "All";
+    return `${set.size} selected`;
+  }
+
+  function setupDropdown(dropdownId, toggleId){
+    const dropdown = document.getElementById(dropdownId);
+    const toggle = document.getElementById(toggleId);
+
+    function close(){
+      dropdown.classList.remove('open');
+      toggle.setAttribute('aria-expanded', 'false');
+    }
+    function open(){
+      document.querySelectorAll('.dropdown.open').forEach(d => {
+        if (d !== dropdown){
+          d.classList.remove('open');
+          d.querySelector('.dropdown-toggle').setAttribute('aria-expanded', 'false');
+        }
+      });
+      dropdown.classList.add('open');
+      toggle.setAttribute('aria-expanded', 'true');
+    }
+
+    toggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (dropdown.classList.contains('open')) close();
+      else open();
+    });
+
+    return { close, open };
+  }
+
+  document.addEventListener('click', (e) => {
+    document.querySelectorAll('.dropdown.open').forEach(d => {
+      if (!d.contains(e.target)){
+        d.classList.remove('open');
+        d.querySelector('.dropdown-toggle').setAttribute('aria-expanded', 'false');
+      }
+    });
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape'){
+      document.querySelectorAll('.dropdown.open').forEach(d => {
+        d.classList.remove('open');
+        d.querySelector('.dropdown-toggle').setAttribute('aria-expanded', 'false');
+      });
+    }
+  });
+
+  /* Deterministic pastel color per title, for fallback "spine card" look */
+  function colorForTitle(title){
+    let hash = 0;
+    for (let i = 0; i < title.length; i++){
+      hash = (hash * 31 + title.charCodeAt(i)) >>> 0;
+    }
+    const hue = hash % 360;
+    return `hsl(${hue}, 42%, 82%)`;
+  }
+
+  const statusEl = document.getElementById('cover-status');
+
+  /* ================= BOOKS ================= */
+  let BOOKS = [];
+
+  function initBooks(){
+    const RAW = JSON.parse(document.getElementById('book-data').textContent);
+
+    const CATEGORY_RULES = [
+      { key: "Fantasy / Sci-Fi", test: /fantasy|science fiction/i },
+      { key: "Graphic Novels & Comics", test: /graphic novel|comic|manga/i },
+      { key: "Fiction", test: /fiction|mystery|thriller|classics/i },
+      { key: "History & Politics", test: /history|politics/i },
+      { key: "Memoir & Biography", test: /memoir/i },
+      { key: "Religion & Spirituality", test: /religion|buddhis|spiritual/i },
+      { key: "Science & Nature", test: /science|nature/i },
+      { key: "Psychology", test: /psycholog/i },
+      { key: "UX, Design & Research", test: /ux|design|research methods/i },
+      { key: "Business", test: /business|self-help/i },
+      { key: "Language Learning", test: /language learning/i },
+      { key: "Children's & YA", test: /children|\byA\b/i },
+      { key: "Travel", test: /travel/i },
+      { key: "Art & Photography", test: /^art|photography|architecture|art instruction/i },
+      { key: "Poetry, Drama & Theater", test: /poetry|drama|theater/i },
+      { key: "Humor", test: /humor/i },
+      { key: "Reference & Dictionaries", test: /reference|dictionary|phrasebook/i },
+      { key: "Sports", test: /sports/i },
+      { key: "Music & Film", test: /music|film/i },
+      { key: "Cooking", test: /cookbook/i },
+      { key: "Sociology & Culture", test: /sociology|culture|media studies|communication/i },
+      { key: "Education", test: /education/i },
+      { key: "Crafts & How-To", test: /craft|woodwork/i },
+    ];
+
+    function categorize(genre){
+      if (!genre) return "Other";
+      for (const rule of CATEGORY_RULES){
+        if (rule.test.test(genre)) return rule.key;
+      }
+      return "Other";
+    }
+
+    function splitLanguages(langStr){
+      if (!langStr) return ["Unspecified"];
+      return langStr.split("/").map(s => s.trim()).filter(Boolean);
+    }
+
+    function cleanAuthor(author){
+      if (!author) return "";
+      if (/^\?\d+/.test(author.trim())) return "";
+      return author;
+    }
+
+    BOOKS = RAW.map((b, i) => {
+      const category = categorize(b.genre);
+      const languages = splitLanguages(b.language);
+      return {
+        id: i,
+        title: b.title,
+        author: cleanAuthor(b.author),
+        location: b.location,
+        genre: b.genre,
+        category,
+        languages,
+        searchBlob: (b.title + " " + cleanAuthor(b.author)).toLowerCase()
+      };
+    });
+
+    const allCategories = [...new Set(BOOKS.map(b => b.category))].sort();
+    const allLanguages = [...new Set(BOOKS.flatMap(b => b.languages))].sort();
+
+    const state = { query: "", activeCategories: new Set(), activeLanguages: new Set() };
+
+    const genreChipRow = document.getElementById('genre-chips');
+    const langChipRow = document.getElementById('lang-chips');
+
+    function renderChips(){
+      genreChipRow.innerHTML = "";
+      genreChipRow.appendChild(makeChip("All", state.activeCategories.size === 0, () => {
+        state.activeCategories.clear();
+        renderChips();
+        renderGrid();
+      }));
+      allCategories.forEach(cat => {
+        genreChipRow.appendChild(makeChip(cat, state.activeCategories.has(cat), () => {
+          if (state.activeCategories.has(cat)) state.activeCategories.delete(cat);
+          else state.activeCategories.add(cat);
+          renderChips();
+          renderGrid();
+        }));
+      });
+
+      langChipRow.innerHTML = "";
+      langChipRow.appendChild(makeChip("All", state.activeLanguages.size === 0, () => {
+        state.activeLanguages.clear();
+        renderChips();
+        renderGrid();
+      }, 'lang'));
+      allLanguages.forEach(lang => {
+        langChipRow.appendChild(makeChip(lang, state.activeLanguages.has(lang), () => {
+          if (state.activeLanguages.has(lang)) state.activeLanguages.delete(lang);
+          else state.activeLanguages.add(lang);
+          renderChips();
+          renderGrid();
+        }, 'lang'));
+      });
+
+      document.getElementById('category-value').textContent = summarizeSelection(state.activeCategories, allCategories);
+      document.getElementById('language-value').textContent = summarizeSelection(state.activeLanguages, allLanguages);
+    }
+
+    setupDropdown('category-dropdown', 'category-toggle');
+    setupDropdown('language-dropdown', 'language-toggle');
+
+    document.getElementById('clear-filters').addEventListener('click', () => {
+      state.activeCategories.clear();
+      state.activeLanguages.clear();
+      renderChips();
+      renderGrid();
+    });
+
+    const searchInput = document.getElementById('search-input');
+    let debounceTimer = null;
+    searchInput.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        state.query = searchInput.value.trim().toLowerCase();
+        renderGrid();
+      }, 120);
+    });
+
+    function getFilteredBooks(){
+      let list = BOOKS;
+      if (state.query) list = list.filter(b => b.searchBlob.includes(state.query));
+      if (state.activeCategories.size) list = list.filter(b => state.activeCategories.has(b.category));
+      if (state.activeLanguages.size) list = list.filter(b => b.languages.some(l => state.activeLanguages.has(l)));
+      return list;
+    }
+
+    /* ---- cover fetching (Open Library + Google Books) ---- */
+    const coverCache = new Map();
+    const stats = { attempted: 0, foundOpenLibrary: 0, foundGoogleBooks: 0, notFound: 0, networkErrors: 0 };
+
+    function updateStatusReadout(){
+      if (!statusEl) return;
+      const parts = [];
+      parts.push(`${stats.attempted}/${BOOKS.length} book covers checked`);
+      parts.push(`${stats.foundOpenLibrary + stats.foundGoogleBooks} found`);
+      if (stats.networkErrors > 0) parts.push(`${stats.networkErrors} network errors`);
+      statusEl.textContent = parts.join(' · ');
+      if (stats.attempted >= 6 && stats.networkErrors >= stats.attempted - 1){
+        statusEl.textContent += ' — if this stays at 0 found, try opening this file through a local server instead of double-clicking it (see console for details).';
+        console.warn('[The Shelf] Nearly every cover lookup is failing with a network error. Try `python3 -m http.server` and open via http://localhost:8000/.');
+      }
+    }
+
+    async function tryOpenLibrary(book){
+      const params = new URLSearchParams({
+        title: book.title.replace(/\s*\(.*?\)\s*/g, ' ').trim(),
+        fields: "cover_i",
+        limit: "1"
+      });
+      if (book.author) params.set("author", book.author);
+      const res = await fetch("https://openlibrary.org/search.json?" + params.toString());
+      if (!res.ok) throw new Error("Open Library HTTP " + res.status);
+      const data = await res.json();
+      const doc = data.docs && data.docs[0];
+      const coverId = doc && doc.cover_i;
+      return coverId ? `https://covers.openlibrary.org/b/id/${coverId}-M.jpg` : null;
+    }
+
+    async function tryGoogleBooks(book){
+      const cleanTitle = book.title.replace(/\s*\(.*?\)\s*/g, ' ').trim();
+      let q = `intitle:${cleanTitle}`;
+      if (book.author) q += `+inauthor:${book.author}`;
+      const params = new URLSearchParams({ q, maxResults: "1" });
+      const res = await fetch("https://www.googleapis.com/books/v1/volumes?" + params.toString());
+      if (!res.ok) throw new Error("Google Books HTTP " + res.status);
+      const data = await res.json();
+      const item = data.items && data.items[0];
+      const links = item && item.volumeInfo && item.volumeInfo.imageLinks;
+      const thumb = links && (links.thumbnail || links.smallThumbnail);
+      return thumb ? thumb.replace(/^http:/, 'https:') : null;
+    }
+
+    async function fetchCoverUrl(book){
+      const key = book.title + "|" + book.author;
+      if (coverCache.has(key)) return coverCache.get(key);
+      stats.attempted++;
+      let url = null, sawNetworkError = false;
+      try { url = await tryOpenLibrary(book); if (url) stats.foundOpenLibrary++; }
+      catch (e){ sawNetworkError = true; console.error('[The Shelf] Open Library lookup failed for', book.title, '—', e.message); }
+      if (!url){
+        try { url = await tryGoogleBooks(book); if (url) stats.foundGoogleBooks++; }
+        catch (e){ sawNetworkError = true; console.error('[The Shelf] Google Books lookup failed for', book.title, '—', e.message); }
+      }
+      if (!url){ stats.notFound++; if (sawNetworkError) stats.networkErrors++; }
+      coverCache.set(key, url);
+      updateStatusReadout();
+      return url;
+    }
+
+    function buildSpineFallback(book){
+      const div = document.createElement('div');
+      div.className = 'spine-fallback';
+      div.style.background = colorForTitle(book.title);
+      const st = document.createElement('div');
+      st.className = 'st';
+      st.textContent = book.title;
+      div.appendChild(st);
+      if (book.author){
+        const sa = document.createElement('div');
+        sa.className = 'sa';
+        sa.textContent = book.author;
+        div.appendChild(sa);
+      }
+      return div;
+    }
+
+    function callNumberFor(book){
+      const catCode = book.category.replace(/[^A-Za-z]/g, '').slice(0,3).toUpperCase() || "GEN";
+      const authorCode = (book.author || book.title).replace(/[^A-Za-z]/g,'').slice(0,3).toUpperCase() || "XXX";
+      return `${catCode}-${authorCode} · ${book.location}`;
+    }
+
+    const coverObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        const wrap = entry.target;
+        coverObserver.unobserve(wrap);
+        const book = wrap.__book;
+        fetchCoverUrl(book).then(url => {
+          if (!url) return;
+          const img = document.createElement('img');
+          img.loading = 'lazy';
+          img.alt = book.title + (book.author ? ' — ' + book.author : '');
+          img.src = url;
+          img.addEventListener('load', () => {
+            wrap.innerHTML = "";
+            img.classList.add('loaded');
+            wrap.appendChild(img);
+            requestAnimationFrame(() => img.classList.add('loaded'));
+          });
+          img.addEventListener('error', () => {});
+        });
+      });
+    }, { rootMargin: "200px 0px" });
+
+    function buildCard(book){
+      const card = document.createElement('article');
+      card.className = 'card';
+
+      const hole = document.createElement('span');
+      hole.className = 'hole';
+      card.appendChild(hole);
+
+      const coverWrap = document.createElement('div');
+      coverWrap.className = 'cover-wrap';
+      coverWrap.appendChild(buildSpineFallback(book));
+      card.appendChild(coverWrap);
+
+      const body = document.createElement('div');
+      body.className = 'card-body';
+
+      const title = document.createElement('div');
+      title.className = 'card-title';
+      title.textContent = book.title;
+      body.appendChild(title);
+
+      if (book.author){
+        const author = document.createElement('div');
+        author.className = 'card-author';
+        author.textContent = book.author;
+        body.appendChild(author);
+      }
+
+      const tags = document.createElement('div');
+      tags.className = 'card-tags';
+      const gTag = document.createElement('span');
+      gTag.className = 'tag genre';
+      gTag.textContent = book.category;
+      tags.appendChild(gTag);
+      book.languages.forEach(l => {
+        const lTag = document.createElement('span');
+        lTag.className = 'tag lang';
+        lTag.textContent = l;
+        tags.appendChild(lTag);
+      });
+      body.appendChild(tags);
+      card.appendChild(body);
+
+      const call = document.createElement('div');
+      call.className = 'call-number';
+      call.textContent = callNumberFor(book);
+      card.appendChild(call);
+
+      coverObserver.observe(coverWrap);
+      coverWrap.__book = book;
+      return card;
+    }
+
+    const grid = document.getElementById('grid');
+    const resultsMeta = document.getElementById('results-meta');
+
+    function renderGrid(){
+      const list = getFilteredBooks();
+      grid.innerHTML = "";
+      const hasFilters = state.query || state.activeCategories.size || state.activeLanguages.size;
+      resultsMeta.textContent = hasFilters
+        ? `${list.length} volume${list.length === 1 ? '' : 's'} found`
+        : `${BOOKS.length} volumes on the shelf`;
+
+      if (list.length === 0){
+        const empty = document.createElement('div');
+        empty.className = 'empty-state';
+        empty.innerHTML = `<div class="big">No matching cards in the drawer.</div><div>Try another title, author, or fewer filters.</div>`;
+        grid.appendChild(empty);
+        return;
+      }
+      const frag = document.createDocumentFragment();
+      list.forEach(book => frag.appendChild(buildCard(book)));
+      grid.appendChild(frag);
+    }
+
+    renderChips();
+    renderGrid();
+  }
+
+  /* ================= MOVIES & TV ================= */
+  let MOVIES = [];
+
+  function initMovies(){
+    const RAW = JSON.parse(document.getElementById('movie-data').textContent);
+
+    function splitGenres(genreStr){
+      if (!genreStr) return ["Other"];
+      return genreStr.split("/").map(s => s.trim()).filter(Boolean);
+    }
+
+    MOVIES = RAW.map((m, i) => {
+      const genres = splitGenres(m.genre);
+      return {
+        id: i,
+        title: m.title,
+        location: m.location,
+        format: m.format,
+        genre: m.genre,
+        genres,
+        notes: m.notes || "",
+        searchBlob: (m.title + " " + m.genre + " " + m.location).toLowerCase()
+      };
+    });
+
+    const allGenres = [...new Set(MOVIES.flatMap(m => m.genres))].sort();
+    const allFormats = [...new Set(MOVIES.map(m => m.format))].sort();
+    const allLocations = [...new Set(MOVIES.map(m => m.location))].sort();
+
+    const state = {
+      query: "",
+      activeGenres: new Set(),
+      activeFormats: new Set(),
+      activeLocations: new Set()
+    };
+
+    const genreChipRow = document.getElementById('movie-genre-chips');
+    const formatChipRow = document.getElementById('movie-format-chips');
+    const locationChipRow = document.getElementById('movie-location-chips');
+
+    function renderChips(){
+      genreChipRow.innerHTML = "";
+      genreChipRow.appendChild(makeChip("All", state.activeGenres.size === 0, () => {
+        state.activeGenres.clear(); renderChips(); renderGrid();
+      }));
+      allGenres.forEach(g => {
+        genreChipRow.appendChild(makeChip(g, state.activeGenres.has(g), () => {
+          if (state.activeGenres.has(g)) state.activeGenres.delete(g); else state.activeGenres.add(g);
+          renderChips(); renderGrid();
+        }));
+      });
+
+      formatChipRow.innerHTML = "";
+      formatChipRow.appendChild(makeChip("All", state.activeFormats.size === 0, () => {
+        state.activeFormats.clear(); renderChips(); renderGrid();
+      }, 'lang'));
+      allFormats.forEach(f => {
+        formatChipRow.appendChild(makeChip(f, state.activeFormats.has(f), () => {
+          if (state.activeFormats.has(f)) state.activeFormats.delete(f); else state.activeFormats.add(f);
+          renderChips(); renderGrid();
+        }, 'lang'));
+      });
+
+      locationChipRow.innerHTML = "";
+      locationChipRow.appendChild(makeChip("All", state.activeLocations.size === 0, () => {
+        state.activeLocations.clear(); renderChips(); renderGrid();
+      }, 'lang'));
+      allLocations.forEach(loc => {
+        locationChipRow.appendChild(makeChip(loc, state.activeLocations.has(loc), () => {
+          if (state.activeLocations.has(loc)) state.activeLocations.delete(loc); else state.activeLocations.add(loc);
+          renderChips(); renderGrid();
+        }, 'lang'));
+      });
+
+      document.getElementById('movie-category-value').textContent = summarizeSelection(state.activeGenres, allGenres);
+      document.getElementById('movie-format-value').textContent = summarizeSelection(state.activeFormats, allFormats);
+      document.getElementById('movie-location-value').textContent = summarizeSelection(state.activeLocations, allLocations);
+    }
+
+    setupDropdown('movie-category-dropdown', 'movie-category-toggle');
+    setupDropdown('movie-format-dropdown', 'movie-format-toggle');
+    setupDropdown('movie-location-dropdown', 'movie-location-toggle');
+
+    document.getElementById('movie-clear-filters').addEventListener('click', () => {
+      state.activeGenres.clear();
+      state.activeFormats.clear();
+      state.activeLocations.clear();
+      renderChips();
+      renderGrid();
+    });
+
+    const searchInput = document.getElementById('movie-search-input');
+    let debounceTimer = null;
+    searchInput.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        state.query = searchInput.value.trim().toLowerCase();
+        renderGrid();
+      }, 120);
+    });
+
+    function getFilteredMovies(){
+      let list = MOVIES;
+      if (state.query) list = list.filter(m => m.searchBlob.includes(state.query));
+      if (state.activeGenres.size) list = list.filter(m => m.genres.some(g => state.activeGenres.has(g)));
+      if (state.activeFormats.size) list = list.filter(m => state.activeFormats.has(m.format));
+      if (state.activeLocations.size) list = list.filter(m => state.activeLocations.has(m.location));
+      return list;
+    }
+
+    /* ---- cover fetching via iTunes Search API (no key required) ---- */
+    const coverCache = new Map();
+    const stats = { attempted: 0, found: 0, notFound: 0, networkErrors: 0 };
+
+    function updateStatusReadout(){
+      if (!statusEl) return;
+      const parts = [];
+      parts.push(`${stats.attempted}/${MOVIES.length} movie/TV covers checked`);
+      parts.push(`${stats.found} found`);
+      if (stats.networkErrors > 0) parts.push(`${stats.networkErrors} network errors`);
+      statusEl.textContent = parts.join(' · ');
+    }
+
+    function cleanTitleForSearch(title){
+      let t = title.replace(/\s*\(.*?\)\s*/g, ' ').trim();
+      const colonIdx = t.indexOf(':');
+      if (colonIdx > 2) t = t.slice(0, colonIdx).trim();
+      return t;
+    }
+
+    async function tryItunes(movie, mediaType){
+      const term = cleanTitleForSearch(movie.title);
+      const params = new URLSearchParams({
+        term,
+        media: mediaType,
+        entity: mediaType === 'movie' ? 'movie' : 'tvShow',
+        limit: "1"
+      });
+      const res = await fetch("https://itunes.apple.com/search?" + params.toString());
+      if (!res.ok) throw new Error("iTunes HTTP " + res.status);
+      const data = await res.json();
+      const item = data.results && data.results[0];
+      const art = item && (item.artworkUrl100 || item.artworkUrl60);
+      return art ? art.replace(/\d+x\d+bb\.(jpg|png)/, '600x600bb.$1') : null;
+    }
+
+    async function fetchCoverUrl(movie){
+      const key = movie.title;
+      if (coverCache.has(key)) return coverCache.get(key);
+      stats.attempted++;
+      let url = null, sawNetworkError = false;
+      try { url = await tryItunes(movie, 'movie'); }
+      catch (e){ sawNetworkError = true; console.error('[The Shelf] iTunes movie lookup failed for', movie.title, '—', e.message); }
+      if (!url){
+        try { url = await tryItunes(movie, 'tvShow'); }
+        catch (e){ sawNetworkError = true; console.error('[The Shelf] iTunes TV lookup failed for', movie.title, '—', e.message); }
+      }
+      if (url) stats.found++;
+      else { stats.notFound++; if (sawNetworkError) stats.networkErrors++; }
+      coverCache.set(key, url);
+      updateStatusReadout();
+      return url;
+    }
+
+    function buildSpineFallback(movie){
+      const div = document.createElement('div');
+      div.className = 'spine-fallback';
+      div.style.background = colorForTitle(movie.title);
+      const st = document.createElement('div');
+      st.className = 'st';
+      st.textContent = movie.title;
+      div.appendChild(st);
+      const sa = document.createElement('div');
+      sa.className = 'sa';
+      sa.textContent = movie.genres[0] || movie.format;
+      div.appendChild(sa);
+      return div;
+    }
+
+    function callNumberFor(movie){
+      const catCode = (movie.genres[0] || "GEN").replace(/[^A-Za-z]/g, '').slice(0,3).toUpperCase() || "GEN";
+      const fmtCode = movie.format === 'Blu-ray' ? 'BR' : 'DVD';
+      const locCode = movie.location === 'Front Room' ? 'FR' : (movie.location === 'Living Room' ? 'LR' : movie.location);
+      return `${catCode}-${fmtCode} · ${locCode}`;
+    }
+
+    const coverObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        const wrap = entry.target;
+        coverObserver.unobserve(wrap);
+        const movie = wrap.__movie;
+        fetchCoverUrl(movie).then(url => {
+          if (!url) return;
+          const img = document.createElement('img');
+          img.loading = 'lazy';
+          img.alt = movie.title;
+          img.src = url;
+          img.addEventListener('load', () => {
+            wrap.innerHTML = "";
+            img.classList.add('loaded');
+            wrap.appendChild(img);
+            const ribbon = document.createElement('span');
+            ribbon.className = 'format-ribbon ' + (movie.format === 'Blu-ray' ? 'bluray' : 'dvd');
+            ribbon.textContent = movie.format;
+            wrap.appendChild(ribbon);
+            requestAnimationFrame(() => img.classList.add('loaded'));
+          });
+          img.addEventListener('error', () => {});
+        });
+      });
+    }, { rootMargin: "200px 0px" });
+
+    function buildCard(movie){
+      const card = document.createElement('article');
+      card.className = 'card';
+
+      const hole = document.createElement('span');
+      hole.className = 'hole';
+      card.appendChild(hole);
+
+      const coverWrap = document.createElement('div');
+      coverWrap.className = 'cover-wrap';
+      coverWrap.appendChild(buildSpineFallback(movie));
+      const ribbon = document.createElement('span');
+      ribbon.className = 'format-ribbon ' + (movie.format === 'Blu-ray' ? 'bluray' : 'dvd');
+      ribbon.textContent = movie.format;
+      coverWrap.appendChild(ribbon);
+      card.appendChild(coverWrap);
+
+      const body = document.createElement('div');
+      body.className = 'card-body';
+
+      const title = document.createElement('div');
+      title.className = 'card-title';
+      title.textContent = movie.title;
+      if (movie.notes){
+        title.title = movie.notes;
+        title.style.borderBottom = '1px dotted var(--card-shadow)';
+      }
+      body.appendChild(title);
+
+      const tags = document.createElement('div');
+      tags.className = 'card-tags';
+      movie.genres.forEach(g => {
+        const gTag = document.createElement('span');
+        gTag.className = 'tag genre';
+        gTag.textContent = g;
+        tags.appendChild(gTag);
+      });
+      const fTag = document.createElement('span');
+      fTag.className = 'tag format';
+      fTag.textContent = movie.format;
+      tags.appendChild(fTag);
+      const lTag = document.createElement('span');
+      lTag.className = 'tag location';
+      lTag.textContent = movie.location;
+      tags.appendChild(lTag);
+      body.appendChild(tags);
+      card.appendChild(body);
+
+      const call = document.createElement('div');
+      call.className = 'call-number';
+      call.textContent = callNumberFor(movie);
+      card.appendChild(call);
+
+      coverObserver.observe(coverWrap);
+      coverWrap.__movie = movie;
+      return card;
+    }
+
+    const grid = document.getElementById('movie-grid');
+    const resultsMeta = document.getElementById('movie-results-meta');
+
+    function renderGrid(){
+      const list = getFilteredMovies();
+      grid.innerHTML = "";
+      const hasFilters = state.query || state.activeGenres.size || state.activeFormats.size || state.activeLocations.size;
+      resultsMeta.textContent = hasFilters
+        ? `${list.length} title${list.length === 1 ? '' : 's'} found`
+        : `${MOVIES.length} titles on the shelf`;
+
+      if (list.length === 0){
+        const empty = document.createElement('div');
+        empty.className = 'empty-state';
+        empty.innerHTML = `<div class="big">No matching cards in the drawer.</div><div>Try another title, or fewer filters.</div>`;
+        grid.appendChild(empty);
+        return;
+      }
+      const frag = document.createDocumentFragment();
+      list.forEach(movie => frag.appendChild(buildCard(movie)));
+      grid.appendChild(frag);
+    }
+
+    renderChips();
+    renderGrid();
+  }
+
+  /* ================= Tab switching ================= */
+  function setupTabs(){
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const views = {
+      books: document.getElementById('books-view'),
+      movies: document.getElementById('movies-view')
+    };
+    const countEl = document.getElementById('item-count');
+    const labelEl = document.getElementById('item-label');
+
+    function activate(tab){
+      tabButtons.forEach(b => {
+        const isActive = b.dataset.tab === tab;
+        b.classList.toggle('active', isActive);
+        b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      });
+      Object.entries(views).forEach(([k, el]) => { el.style.display = (k === tab) ? '' : 'none'; });
+      if (tab === 'books'){
+        countEl.textContent = BOOKS.length;
+        labelEl.textContent = 'volumes catalogued';
+      } else {
+        countEl.textContent = MOVIES.length;
+        labelEl.textContent = 'titles catalogued';
+      }
+    }
+
+    tabButtons.forEach(b => b.addEventListener('click', () => activate(b.dataset.tab)));
+    activate('books');
+  }
+
+  initBooks();
+  initMovies();
+  setupTabs();
+
+})();
+</script>
+
+</body>
+</html>
